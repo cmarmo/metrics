@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.3.5
+_src_path: https://github.com/jupyterlab/extension-template
+author_email: git@darian.link
+author_name: Afshin T. Darian
+has_binder: false
+has_settings: true
+kind: frontend
+labextension_name: '@quantstack/metrics'
+project_short_description: An extension for metrics
+python_name: quantstack_metrics
+repository: https://github.com/quantstack/metrics
+test: true
+

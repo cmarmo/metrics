@@ -1,0 +1,8 @@
+{
+  "jupyter.lab.shortcuts": [],
+  "title": "@quantstack/metrics",
+  "description": "@quantstack/metrics settings.",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}
