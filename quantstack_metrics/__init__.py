@@ -9,8 +9,23 @@ except ImportError:
     __version__ = "dev"
 
 
+import pathlib
+
 def _jupyter_labextension_paths():
     return [{
         "src": "labextension",
         "dest": "@quantstack/metrics"
     }]
+
+
+def _jupyter_server_extension_points():
+    return [{
+        "module": "quantstack_metrics"
+    }]
+
+
+def _load_jupyter_server_extension(server_app):
+    name = "quantstack_metrics"
+    schema_file = pathlib.Path(__file__).parent / "command.yaml"
+    server_app.event_logger.register_event_schema(schema_file)
+    server_app.log.info(f"Registered {name} server extension")

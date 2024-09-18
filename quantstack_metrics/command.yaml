@@ -1,0 +1,17 @@
+$id: https://quantstack.net/schema/metrics/command/v1
+version: 1
+title: command metrics emission
+description: |
+  a command metrics emission
+type: object
+properties:
+  metrics:
+    type: object
+    properties:
+      command:
+        type: string
+      args:
+        type: object
+        additionalProperties: true
+required:
+  - metrics
