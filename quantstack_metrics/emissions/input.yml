@@ -1,0 +1,17 @@
+$id: https://quantstack.net/schema/metrics/input/v1
+version: 1
+title: input metrics emission
+description: |
+  a input metrics emission
+type: object
+properties:
+  metrics:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        type: object
+        additionalProperties: true
+required:
+  - metrics
