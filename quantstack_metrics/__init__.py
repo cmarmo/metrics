@@ -27,6 +27,6 @@ def _jupyter_server_extension_points():
 def _load_jupyter_server_extension(app):
     name = "quantstack_metrics"
     parent = pathlib.Path(__file__).parent
+    app.event_logger.register_event_schema(parent / "emissions" / "activity.yml")
     app.event_logger.register_event_schema(parent / "emissions" / "command.yml")
-    app.event_logger.register_event_schema(parent / "emissions" / "input.yml")
     app.log.info(f"Registered {name} server extension")

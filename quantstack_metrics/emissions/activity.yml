@@ -1,8 +1,8 @@
-$id: https://quantstack.net/schema/metrics/input/v1
+$id: https://quantstack.net/schema/metrics/activity/v1
 version: 1
-title: input metrics emission
+title: activity change metrics emission
 description: |
-  a input metrics emission
+  an activity change metrics emission
 type: object
 properties:
   metrics:

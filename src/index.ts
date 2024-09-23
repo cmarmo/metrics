@@ -24,8 +24,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
     } catch (error) {
       console.error(`${plugin.id} settings load error:`, error);
     }
-    void Private.broadcastEmissions(app);
-    void Private.handleEmissions(app, provider);
+    void Private.broadcast(app);
+    void Private.receive(app, provider);
   }
 };
 
@@ -39,20 +39,26 @@ const provider: JupyterFrontEndPlugin<IMetrics.Provider> = {
 export default [plugin, provider];
 
 namespace Private {
-  export async function broadcastEmissions({
+  export async function broadcast({
     commands,
-    serviceManager: { events }
+    serviceManager: { events },
+    shell
   }: JupyterFrontEnd) {
-    commands.commandExecuted.connect((_, { args, id }) => {
+    commands.commandExecuted.connect(function connector(_, { args, id }) {
       events.emit({
         schema_id: IMetrics.Event.Command.SCHEMA,
+        data: { metrics: { command: id, args: args as unknown as any } },
+        version: IMetrics.Event.Command.VERSION
+      });
+      events.emit({
+        schema_id: "http://www.example.com/foobar",
         data: { metrics: { command: id, args: args as unknown as any } },
         version: IMetrics.Event.Command.VERSION
       });
     });
   }
 
-  export async function handleEmissions(
+  export async function receive(
     { restored, serviceManager: { events } }: JupyterFrontEnd,
     provider: IMetrics.Provider
   ) {
