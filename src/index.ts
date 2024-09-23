@@ -3,7 +3,12 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { CommandRegistry } from '@lumino/commands';
+import { DisposableDelegate, IDisposable } from '@lumino/disposable';
+import { FocusTracker, Widget } from '@lumino/widgets';
 import { IMetrics } from './metrics';
+
+let deactivate: IDisposable | null;
 
 const plugin: JupyterFrontEndPlugin<void> = {
   id: '@quantstack/metrics:plugin',
@@ -24,9 +29,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
     } catch (error) {
       console.error(`${plugin.id} settings load error:`, error);
     }
-    void Private.broadcast(app);
+    // Store broadcast signal disconnection in case the plugin is deactivated.
+    deactivate = Private.broadcast(app);
     void Private.receive(app, provider);
-  }
+  },
+  deactivate: () => deactivate?.dispose()
 };
 
 const provider: JupyterFrontEndPlugin<IMetrics.Provider> = {
@@ -39,22 +46,26 @@ const provider: JupyterFrontEndPlugin<IMetrics.Provider> = {
 export default [plugin, provider];
 
 namespace Private {
-  export async function broadcast({
+  export function broadcast({
     commands,
     serviceManager: { events },
     shell
-  }: JupyterFrontEnd) {
-    commands.commandExecuted.connect(function connector(_, { args, id }) {
+  }: JupyterFrontEnd): IDisposable {
+    const activityHandler = (_: unknown, { newValue }: FocusTracker.IChangedArgs<Widget>) => {
+      console.log('newValue', newValue?.title.label);
+    }
+    const commandHandler = (_: unknown, { args, id }: CommandRegistry.ICommandExecutedArgs) => {
       events.emit({
         schema_id: IMetrics.Event.Command.SCHEMA,
         data: { metrics: { command: id, args: args as unknown as any } },
         version: IMetrics.Event.Command.VERSION
       });
-      events.emit({
-        schema_id: "http://www.example.com/foobar",
-        data: { metrics: { command: id, args: args as unknown as any } },
-        version: IMetrics.Event.Command.VERSION
-      });
+    };
+    commands.commandExecuted.connect(commandHandler);
+    shell.currentChanged?.connect(activityHandler);
+    return new DisposableDelegate(() => {
+      commands.commandExecuted.disconnect(commandHandler);
+      shell.currentChanged?.disconnect(activityHandler);
     });
   }
 
