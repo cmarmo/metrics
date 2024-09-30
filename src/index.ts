@@ -4,11 +4,11 @@ import {
 } from '@jupyterlab/application';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { CommandRegistry } from '@lumino/commands';
-import { DisposableDelegate, IDisposable } from '@lumino/disposable';
+import { DisposableDelegate, DisposableSet, IDisposable } from '@lumino/disposable';
 import { FocusTracker, Widget } from '@lumino/widgets';
 import { IMetrics } from './metrics';
 
-let deactivate: IDisposable | null;
+let deactivate: IDisposable | null = null;
 
 const plugin: JupyterFrontEndPlugin<void> = {
   id: '@quantstack/metrics:plugin',
@@ -30,8 +30,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
       console.error(`${plugin.id} settings load error:`, error);
     }
     // Store broadcast signal disconnection in case the plugin is deactivated.
-    deactivate = Private.broadcast(app);
-    void Private.receive(app, provider);
+    deactivate = DisposableSet.from([
+      Private.broadcast(app),
+      await Private.receive(app, provider)
+    ]);
   },
   deactivate: () => deactivate?.dispose()
 };
@@ -57,7 +59,13 @@ namespace Private {
     const commandHandler = (_: unknown, { args, id }: CommandRegistry.ICommandExecutedArgs) => {
       events.emit({
         schema_id: IMetrics.Event.Command.SCHEMA,
-        data: { metrics: { command: id, args: args as unknown as any } },
+        data: {
+          metrics: {
+            args: args as unknown as any,
+            caption: commands.caption(id, args),
+            command: id
+          }
+        },
         version: IMetrics.Event.Command.VERSION
       });
     };
@@ -72,13 +80,18 @@ namespace Private {
   export async function receive(
     { restored, serviceManager: { events } }: JupyterFrontEnd,
     provider: IMetrics.Provider
-  ) {
+  ): Promise<IDisposable> {
     await restored;
-    for await (const event of events.stream) {
-      if (event.schema_id === IMetrics.Event.Command.SCHEMA) {
-        console.log('emission!', event);
-        void provider.collect(event);
+    let stop = false;
+    void (async () => {
+      for await (const event of events.stream) {
+        if (stop) break;
+        if (event.schema_id === IMetrics.Event.Command.SCHEMA) {
+          console.log('emission!', event);
+          void provider.collect(event);
+        }
       }
-    }
+    })();
+    return new DisposableDelegate(() => stop = true);
   }
 }
