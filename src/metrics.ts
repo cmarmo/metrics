@@ -4,7 +4,7 @@ export namespace IMetrics {
   export namespace Event {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface CurrentChanged {
-      type: string;
+      label: string;
     }
 
     export namespace CurrentChanged {
