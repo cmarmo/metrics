@@ -2,7 +2,6 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { CommandRegistry } from '@lumino/commands';
 import {
   DisposableDelegate,
@@ -14,40 +13,28 @@ import { IMetrics } from './metrics';
 
 let deactivate: IDisposable | null = null;
 
-const plugin: JupyterFrontEndPlugin<void> = {
-  id: '@quantstack/metrics:plugin',
-  description: 'An extension for metrics',
+const emitter: JupyterFrontEndPlugin<void> = {
+  id: '@quantstack/metrics:emitter',
+  description: 'An extension that emits metrics events',
   autoStart: true,
-  requires: [IMetrics.Provider],
-  optional: [ISettingRegistry],
-  activate: async (
-    app: JupyterFrontEnd,
-    provider: IMetrics.Provider,
-    registry: ISettingRegistry | null
-  ) => {
-    try {
-      if (registry) {
-        const settings = await registry.load(plugin.id);
-        console.log(`${plugin.id} settings loaded:`, settings.composite);
-      }
-    } catch (error) {
-      console.error(`${plugin.id} settings load error:`, error);
-    }
-    // Disconnect signals if the plugin is deactivated.
-    const { broadcast, receive } = Private;
-    deactivate = DisposableSet.from([broadcast(app), receive(app, provider)]);
+  requires: [IMetrics.Collector],
+  activate: (app: JupyterFrontEnd, collector: IMetrics.Collector) => {
+    deactivate = DisposableSet.from([
+      Private.broadcast(app),
+      Private.receive(app, collector)
+    ]);
   },
   deactivate: () => deactivate?.dispose()
 };
 
-const provider: JupyterFrontEndPlugin<IMetrics.Provider> = {
-  id: '@quantstack/metrics:provider',
-  description: 'A provider for metrics',
-  provides: IMetrics.Provider,
+const collector: JupyterFrontEndPlugin<IMetrics.Collector> = {
+  id: '@quantstack/metrics:collector',
+  description: 'A collector for metrics emissions',
+  provides: IMetrics.Collector,
   activate: () => ({ collect: async () => undefined })
 };
 
-export default [plugin, provider];
+export default [emitter, collector];
 
 namespace Private {
   export function broadcast({
@@ -95,7 +82,7 @@ namespace Private {
 
   export function receive(
     { restored, serviceManager: { events } }: JupyterFrontEnd,
-    provider: IMetrics.Provider
+    collector: IMetrics.Collector
   ): IDisposable {
     let stop = false;
     void (async () => {
@@ -106,13 +93,13 @@ namespace Private {
         }
         switch (event.schema_id) {
           case IMetrics.Event.CurrentChanged.SCHEMA:
-            provider.collect(
+            collector.collect(
               event.schema_id,
               event.metrics as unknown as IMetrics.Event.CurrentChanged
             );
             break;
           case IMetrics.Event.CommandExecuted.SCHEMA:
-            provider.collect(
+            collector.collect(
               event.schema_id,
               event.metrics as unknown as IMetrics.Event.CommandExecuted
             );
@@ -122,6 +109,6 @@ namespace Private {
         }
       }
     })();
-    return new DisposableDelegate(() => (stop = true));
+    return new DisposableDelegate(() => void (stop = true));
   }
 }

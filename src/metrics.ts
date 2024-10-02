@@ -1,6 +1,16 @@
 import { JSONObject, Token } from '@lumino/coreutils';
 
 export namespace IMetrics {
+  export const Collector = new Token('@quantstack/metrics:collector');
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  export interface Collector {
+    collect: (
+      schema: string,
+      event: IMetrics.Event.CommandExecuted | IMetrics.Event.CurrentChanged
+    ) => Promise<void>;
+  }
+
   export namespace Event {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface CurrentChanged {
@@ -27,15 +37,5 @@ export namespace IMetrics {
 
       export const SCHEMA = `https://quantstack.net/schema/metrics/command-executed/v${VERSION}`;
     }
-  }
-
-  export const Provider = new Token('@quantstack/metrics:provider');
-
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  export interface Provider {
-    collect: (
-      schema: string,
-      event: IMetrics.Event.CommandExecuted | IMetrics.Event.CurrentChanged
-    ) => Promise<void>;
   }
 }
