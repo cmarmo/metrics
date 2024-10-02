@@ -1,14 +1,14 @@
-$id: https://quantstack.net/schema/metrics/activity/v1
+$id: https://quantstack.net/schema/metrics/current-changed/v1
 version: 1
-title: activity change metrics emission
+title: current changed metrics emission
 description: |
-  an activity change metrics emission
+  a current activity changed metrics emission
 type: object
 properties:
   metrics:
     type: object
     properties:
-      type:
+      label:
         type: string
       properties:
         type: object

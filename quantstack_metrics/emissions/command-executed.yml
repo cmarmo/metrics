@@ -1,21 +1,21 @@
-$id: https://quantstack.net/schema/metrics/command/v1
+$id: https://quantstack.net/schema/metrics/command-executed/v1
 version: 1
-title: command metrics emission
+title: command executed metrics emission
 description: |
-  a command metrics emission
+  a command execution metrics emission
 type: object
 properties:
   metrics:
     type: object
     properties:
-      caption:
-        optional: true
-        type: string
       command:
         type: string
       args:
         type: object
         additionalProperties: true
+      label:
+        optional: true
+        type: string
     required:
       - command
 required:

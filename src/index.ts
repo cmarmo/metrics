@@ -4,7 +4,11 @@ import {
 } from '@jupyterlab/application';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { CommandRegistry } from '@lumino/commands';
-import { DisposableDelegate, DisposableSet, IDisposable } from '@lumino/disposable';
+import {
+  DisposableDelegate,
+  DisposableSet,
+  IDisposable
+} from '@lumino/disposable';
 import { FocusTracker, Widget } from '@lumino/widgets';
 import { IMetrics } from './metrics';
 
@@ -29,11 +33,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
     } catch (error) {
       console.error(`${plugin.id} settings load error:`, error);
     }
-    // Store broadcast signal disconnection in case the plugin is deactivated.
-    deactivate = DisposableSet.from([
-      Private.broadcast(app),
-      await Private.receive(app, provider)
-    ]);
+    // Disconnect signals if the plugin is deactivated.
+    const { broadcast, receive } = Private;
+    deactivate = DisposableSet.from([broadcast(app), receive(app, provider)]);
   },
   deactivate: () => deactivate?.dispose()
 };
@@ -53,45 +55,73 @@ namespace Private {
     serviceManager: { events },
     shell
   }: JupyterFrontEnd): IDisposable {
-    const activityHandler = (_: unknown, { newValue }: FocusTracker.IChangedArgs<Widget>) => {
-      console.log('newValue', newValue?.title.label);
-    }
-    const commandHandler = (_: unknown, { args, id }: CommandRegistry.ICommandExecutedArgs) => {
+    const commandExecuted = (
+      _: unknown,
+      { args, id }: CommandRegistry.ICommandExecutedArgs
+    ) => {
       events.emit({
-        schema_id: IMetrics.Event.Command.SCHEMA,
+        schema_id: IMetrics.Event.CommandExecuted.SCHEMA,
         data: {
           metrics: {
             args: args as unknown as any,
-            caption: commands.caption(id, args),
+            label: commands.label(id, args) || commands.caption(id, args),
             command: id
           }
         },
-        version: IMetrics.Event.Command.VERSION
+        version: IMetrics.Event.CommandExecuted.VERSION
       });
     };
-    commands.commandExecuted.connect(commandHandler);
-    shell.currentChanged?.connect(activityHandler);
+    const currentChanged = (
+      _: unknown,
+      { newValue }: FocusTracker.IChangedArgs<Widget>
+    ) => {
+      if (newValue) {
+        events.emit({
+          schema_id: IMetrics.Event.CurrentChanged.SCHEMA,
+          data: {
+            metrics: { label: newValue.title.label || newValue.title.caption }
+          },
+          version: IMetrics.Event.CurrentChanged.VERSION
+        });
+      }
+    };
+    commands.commandExecuted.connect(commandExecuted);
+    shell.currentChanged?.connect(currentChanged);
     return new DisposableDelegate(() => {
-      commands.commandExecuted.disconnect(commandHandler);
-      shell.currentChanged?.disconnect(activityHandler);
+      commands.commandExecuted.disconnect(commandExecuted);
+      shell.currentChanged?.disconnect(currentChanged);
     });
   }
 
-  export async function receive(
+  export function receive(
     { restored, serviceManager: { events } }: JupyterFrontEnd,
     provider: IMetrics.Provider
-  ): Promise<IDisposable> {
-    await restored;
+  ): IDisposable {
     let stop = false;
     void (async () => {
+      await restored;
       for await (const event of events.stream) {
-        if (stop) break;
-        if (event.schema_id === IMetrics.Event.Command.SCHEMA) {
-          console.log('emission!', event);
-          void provider.collect(event);
+        if (stop) {
+          break;
+        }
+        switch (event.schema_id) {
+          case IMetrics.Event.CurrentChanged.SCHEMA:
+            provider.collect(
+              event.schema_id,
+              event.metrics as unknown as IMetrics.Event.CurrentChanged
+            );
+            break;
+          case IMetrics.Event.CommandExecuted.SCHEMA:
+            provider.collect(
+              event.schema_id,
+              event.metrics as unknown as IMetrics.Event.CommandExecuted
+            );
+            break;
+          default:
+            continue;
         }
       }
     })();
-    return new DisposableDelegate(() => stop = true);
+    return new DisposableDelegate(() => (stop = true));
   }
 }
