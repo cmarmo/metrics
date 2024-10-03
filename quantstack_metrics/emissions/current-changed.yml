@@ -10,8 +10,5 @@ properties:
     properties:
       label:
         type: string
-      properties:
-        type: object
-        additionalProperties: true
 required:
   - metrics
