@@ -18,5 +18,8 @@ properties:
         type: string
     required:
       - command
+  timestamp:
+    type: string
 required:
   - metrics
+  - timestamp

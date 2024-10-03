@@ -46,15 +46,17 @@ namespace Private {
       _: unknown,
       { args, id }: CommandRegistry.ICommandExecutedArgs
     ) => {
+      const data: IMetrics.Event<IMetrics.Event.CommandExecuted> = {
+        metrics: {
+          args: args as unknown as any,
+          label: commands.label(id, args) || commands.caption(id, args),
+          command: id
+        },
+        timestamp: new Date().toISOString()
+      };
       events.emit({
         schema_id: IMetrics.Event.CommandExecuted.SCHEMA,
-        data: {
-          metrics: {
-            args: args as unknown as any,
-            label: commands.label(id, args) || commands.caption(id, args),
-            command: id
-          }
-        },
+        data,
         version: IMetrics.Event.CommandExecuted.VERSION
       });
     };
@@ -62,15 +64,18 @@ namespace Private {
       _: unknown,
       { newValue }: FocusTracker.IChangedArgs<Widget>
     ) => {
-      if (newValue) {
-        events.emit({
-          schema_id: IMetrics.Event.CurrentChanged.SCHEMA,
-          data: {
-            metrics: { label: newValue.title.label || newValue.title.caption }
-          },
-          version: IMetrics.Event.CurrentChanged.VERSION
-        });
+      if (newValue === null) {
+        return;
       }
+      const data: IMetrics.Event<IMetrics.Event.CurrentChanged> = {
+        metrics: { label: newValue.title.label || newValue.title.caption },
+        timestamp: new Date().toISOString()
+      };
+      void events.emit({
+        schema_id: IMetrics.Event.CurrentChanged.SCHEMA,
+        data,
+        version: IMetrics.Event.CurrentChanged.VERSION
+      });
     };
     commands.commandExecuted.connect(commandExecuted);
     shell.currentChanged?.connect(currentChanged);
@@ -87,22 +92,22 @@ namespace Private {
     let stop = false;
     void (async () => {
       await restored;
-      for await (const event of events.stream) {
+      for await (const { metrics, schema_id, timestamp } of events.stream) {
         if (stop) {
           break;
         }
-        switch (event.schema_id) {
+        switch (schema_id) {
           case IMetrics.Event.CurrentChanged.SCHEMA:
-            collector.collect(
-              event.schema_id,
-              event.metrics as unknown as IMetrics.Event.CurrentChanged
-            );
+            collector.collect(schema_id, {
+              metrics: metrics as unknown as IMetrics.Event.CurrentChanged,
+              timestamp: timestamp as unknown as string
+            });
             break;
           case IMetrics.Event.CommandExecuted.SCHEMA:
-            collector.collect(
-              event.schema_id,
-              event.metrics as unknown as IMetrics.Event.CommandExecuted
-            );
+            collector.collect(schema_id, {
+              metrics: metrics as unknown as IMetrics.Event.CommandExecuted,
+              timestamp: timestamp as unknown as string
+            });
             break;
           default:
             continue;

@@ -5,10 +5,17 @@ export namespace IMetrics {
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
   export interface Collector {
-    collect: (
-      schema: string,
-      event: IMetrics.Event.CommandExecuted | IMetrics.Event.CurrentChanged
-    ) => Promise<void>;
+    collect: (schema: string, event: Event) => Promise<void>;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  export interface Event<T = Event.CommandExecuted | Event.CurrentChanged> {
+    metrics: T;
+
+    /**
+     * ISO timestamp
+     */
+    timestamp: string;
   }
 
   export namespace Event {

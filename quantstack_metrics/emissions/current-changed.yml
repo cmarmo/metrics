@@ -10,5 +10,8 @@ properties:
     properties:
       label:
         type: string
+  timestamp:
+    type: string
 required:
   - metrics
+  - timestamp
