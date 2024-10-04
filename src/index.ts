@@ -35,28 +35,23 @@ const collector: JupyterFrontEndPlugin<IMetrics.Collector> = {
 export default [emitter, collector];
 
 namespace Private {
-  export function broadcast({
-    commands,
-    serviceManager: { events },
-    shell
-  }: JupyterFrontEnd): IDisposable {
+  export function broadcast(app: JupyterFrontEnd): IDisposable {
+    const { commands, serviceManager, shell } = app;
     const commandExecuted = (
       _: unknown,
       { args, id }: CommandRegistry.ICommandExecutedArgs
     ) => {
+      const { SCHEMA, VERSION } = IMetrics.Event.CommandExecuted;
       const data: IMetrics.Event<IMetrics.Event.CommandExecuted> = {
         metrics: {
           args: args as unknown as any,
-          label: commands.label(id, args) || commands.caption(id, args),
-          command: id
+          command: id,
+          label: commands.label(id, args) || commands.caption(id, args)
         },
         timestamp: new Date().toISOString()
       };
-      events.emit({
-        schema_id: IMetrics.Event.CommandExecuted.SCHEMA,
-        data,
-        version: IMetrics.Event.CommandExecuted.VERSION
-      });
+      const event = { data, schema_id: SCHEMA, version: VERSION };
+      void serviceManager.events.emit(event);
     };
     const currentChanged = (
       _: unknown,
@@ -65,18 +60,18 @@ namespace Private {
       if (newValue === null) {
         return;
       }
+      const { SCHEMA, VERSION } = IMetrics.Event.CurrentChanged;
       const data: IMetrics.Event<IMetrics.Event.CurrentChanged> = {
         metrics: { label: newValue.title.label || newValue.title.caption },
         timestamp: new Date().toISOString()
       };
-      void events.emit({
-        schema_id: IMetrics.Event.CurrentChanged.SCHEMA,
-        data,
-        version: IMetrics.Event.CurrentChanged.VERSION
-      });
+      const event = { data, schema_id: SCHEMA, version: VERSION };
+      void serviceManager.events.emit(event);
     };
+
     commands.commandExecuted.connect(commandExecuted);
     shell.currentChanged?.connect(currentChanged);
+
     return new DisposableDelegate(() => {
       commands.commandExecuted.disconnect(commandExecuted);
       shell.currentChanged?.disconnect(currentChanged);
