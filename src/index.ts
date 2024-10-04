@@ -11,20 +11,18 @@ import {
 import { FocusTracker, Widget } from '@lumino/widgets';
 import { IMetrics } from './metrics';
 
-let deactivate: IDisposable | null = null;
-
 const emitter: JupyterFrontEndPlugin<void> = {
   id: '@quantstack/metrics:emitter',
   description: 'An extension that emits metrics events',
   autoStart: true,
   requires: [IMetrics.Collector],
-  activate: (app: JupyterFrontEnd, collector: IMetrics.Collector) => {
-    deactivate = DisposableSet.from([
-      Private.broadcast(app),
-      Private.receive(app, collector)
-    ]);
-  },
-  deactivate: () => deactivate?.dispose()
+  ...((set?: IDisposable) => ({
+    activate: (app: JupyterFrontEnd, collector: IMetrics.Collector) => {
+      const { broadcast, receive } = Private;
+      set = DisposableSet.from([broadcast(app), receive(app, collector)]);
+    },
+    deactivate: () => set?.dispose()
+  }))()
 };
 
 const collector: JupyterFrontEndPlugin<IMetrics.Collector> = {
