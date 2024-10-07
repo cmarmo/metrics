@@ -29,4 +29,5 @@ def _load_jupyter_server_extension(app):
     parent = pathlib.Path(__file__).parent
     app.event_logger.register_event_schema(parent / "emissions" / "command-executed.yml")
     app.event_logger.register_event_schema(parent / "emissions" / "current-changed.yml")
+    app.event_logger.register_event_schema(parent / "emissions" / "runtime-error.yml")
     app.log.info(f"Registered {name} server extension")

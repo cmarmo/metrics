@@ -1,0 +1,19 @@
+$id: https://quantstack.net/schema/metrics/runtime-error/v1
+version: 1
+title: runtime error metrics emission
+description: |
+  a runtime error event metrics emission
+type: object
+properties:
+  metrics:
+    type: object
+    properties:
+      type:
+        type: string
+      description:
+        type: string
+  timestamp:
+    type: string
+required:
+  - metrics
+  - timestamp

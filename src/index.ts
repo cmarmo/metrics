@@ -22,6 +22,7 @@ const emitter: JupyterFrontEndPlugin<void> = {
       set = DisposableSet.from([
         IMetrics.Event.CommandExecuted.broadcast(app),
         IMetrics.Event.CurrentChanged.broadcast(app),
+        IMetrics.Event.RuntimeError.broadcast(app),
         IMetrics.Event.dispatch(app, collector)
       ]);
     },

@@ -98,6 +98,22 @@ export namespace IMetrics {
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    export interface RuntimeError {
+      type: string;
+      description: string;
+    }
+
+    export namespace RuntimeError {
+      export const VERSION = '1';
+
+      export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
+
+      export function broadcast(_: JupyterFrontEnd): IDisposable {
+        return new DisposableDelegate(() => undefined);
+      }
+    }
+
     export function dispatch(
       { restored, serviceManager: { events } }: JupyterFrontEnd,
       collector: Collector
