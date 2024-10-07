@@ -1,6 +1,6 @@
-# quantstack_metrics
+# QuantStack Metrics
 
-An extension for metrics
+An extension for metrics.
 
 ## Requirements
 
