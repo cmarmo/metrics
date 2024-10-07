@@ -1,8 +1,6 @@
-# quantstack_metrics
+# QuantStack Metrics
 
-[![Github Actions Status](https://github.com/quantstack/metrics/workflows/Build/badge.svg)](https://github.com/quantstack/metrics/actions/workflows/build.yml)
-
-An extension for metrics
+An extension for metrics.
 
 ## Requirements
 

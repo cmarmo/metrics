@@ -16,6 +16,9 @@ const emitter: JupyterFrontEndPlugin<void> = {
   requires: [IMetrics.Collector],
   ...((set?: IDisposable) => ({
     activate: (app, collector: IMetrics.Collector) => {
+      console.log(
+        'JupyterLab extension @quantstack/metrics:emitter is activated!'
+      );
       set = DisposableSet.from([
         IMetrics.Event.CommandExecuted.broadcast(app),
         IMetrics.Event.CurrentChanged.broadcast(app),
