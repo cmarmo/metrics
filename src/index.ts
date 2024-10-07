@@ -18,6 +18,7 @@ const emitter: JupyterFrontEndPlugin<void> = {
   requires: [IMetrics.Collector],
   ...((set?: IDisposable) => ({
     activate: (app: JupyterFrontEnd, collector: IMetrics.Collector) => {
+      console.log('JupyterLab extension @quantstack/metrics is activated!');
       const { broadcast, receive } = Private;
       set = DisposableSet.from([broadcast(app), receive(app, collector)]);
     },
