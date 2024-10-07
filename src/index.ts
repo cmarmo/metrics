@@ -6,7 +6,10 @@ const collector: JupyterFrontEndPlugin<IMetrics.Collector> = {
   id: '@quantstack/metrics:collector',
   description: 'A collector for metrics emissions',
   provides: IMetrics.Collector,
-  activate: () => ({ collect: async () => undefined })
+  activate: () => {
+    console.warn(`${collector.id} should be replaced, it is a no-op`);
+    return { collect: async () => undefined };
+  }
 };
 
 const emitter: JupyterFrontEndPlugin<void> = {
@@ -16,9 +19,6 @@ const emitter: JupyterFrontEndPlugin<void> = {
   requires: [IMetrics.Collector],
   ...((set?: IDisposable) => ({
     activate: (app, collector: IMetrics.Collector) => {
-      console.log(
-        'JupyterLab extension @quantstack/metrics:emitter is activated!'
-      );
       set = DisposableSet.from([
         IMetrics.Event.CommandExecuted.broadcast(app),
         IMetrics.Event.CurrentChanged.broadcast(app),

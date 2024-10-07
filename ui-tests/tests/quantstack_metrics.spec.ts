@@ -18,7 +18,7 @@ test('should emit an activation console message', async ({ page }) => {
   expect(
     logs.filter(
       s =>
-        s === 'JupyterLab extension @quantstack/metrics:emitter is activated!'
+        s === '@quantstack/metrics:collector should be replaced, it is a no-op'
     )
   ).toHaveLength(1);
 });
