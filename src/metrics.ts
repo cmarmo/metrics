@@ -13,7 +13,9 @@ export namespace IMetrics {
   }
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  export interface Event<T = Event.CommandExecuted | Event.CurrentChanged> {
+  export interface Event<
+    T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
+  > {
     metrics: T;
 
     /**
@@ -105,11 +107,20 @@ export namespace IMetrics {
     }
 
     export namespace RuntimeError {
-      export const VERSION = '1';
+      export const VERSION = '2';
 
       export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
 
-      export function broadcast(_: JupyterFrontEnd): IDisposable {
+      export function broadcast(app: JupyterFrontEnd): IDisposable {
+        const { events } = app.serviceManager;
+        console.log('charlie', window.onerror, window.onunhandledrejection);
+        void events.emit({ schema_id: SCHEMA, version: VERSION, data: {} });
+        window.onerror = (event, source, lineno, colno, error) => {
+          console.log('delta', event);
+        };
+        window.onunhandledrejection = event => {
+          console.log('echo', event.reason);
+        };
         return new DisposableDelegate(() => undefined);
       }
     }
@@ -135,6 +146,12 @@ export namespace IMetrics {
             case CurrentChanged.SCHEMA:
               collector.collect(schema_id, {
                 metrics: metrics as unknown as CurrentChanged,
+                timestamp: timestamp as unknown as string
+              });
+              break;
+            case RuntimeError.SCHEMA:
+              collector.collect(schema_id, {
+                metrics: metrics as unknown as RuntimeError,
                 timestamp: timestamp as unknown as string
               });
               break;
