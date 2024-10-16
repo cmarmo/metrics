@@ -5,6 +5,18 @@ description: |
   a current activity changed metrics emission
 type: object
 properties:
+  level:
+    type: object
+    properties:
+      sensitivity:
+        type: string
+        enum:
+          - high
+          - moderate
+          - low
+      anonymous:
+        type: boolean
+        default: false
   metrics:
     type: object
     properties:
@@ -13,5 +25,6 @@ properties:
   timestamp:
     type: string
 required:
+  - level
   - metrics
   - timestamp

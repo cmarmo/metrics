@@ -16,6 +16,12 @@ export namespace IMetrics {
   export interface Event<
     T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
   > {
+    level: {
+      anonymous: boolean;
+
+      sensitivity: 'high' | 'moderate' | 'low';
+    };
+
     metrics: T;
 
     /**
@@ -49,6 +55,7 @@ export namespace IMetrics {
         ) => {
           const { SCHEMA, VERSION } = CommandExecuted;
           const data: Event<CommandExecuted> = {
+            level: { anonymous: false, sensitivity: 'high' },
             metrics: {
               args: args as unknown as any,
               command: id,
@@ -87,6 +94,7 @@ export namespace IMetrics {
           }
           const { SCHEMA, VERSION } = CurrentChanged;
           const data: Event<CurrentChanged> = {
+            level: { anonymous: false, sensitivity: 'high' },
             metrics: { label: newValue.title.label || newValue.title.caption },
             timestamp: new Date().toISOString()
           };
@@ -107,7 +115,7 @@ export namespace IMetrics {
     }
 
     export namespace RuntimeError {
-      export const VERSION = '2';
+      export const VERSION = '1';
 
       export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
 
@@ -132,27 +140,31 @@ export namespace IMetrics {
       let stop = false;
       void (async () => {
         await restored;
-        for await (const { metrics, schema_id, timestamp } of events.stream) {
+        for await (const event of events.stream) {
           if (stop) {
             break;
           }
+          const { level, metrics, schema_id, timestamp } = event;
           switch (schema_id) {
             case CommandExecuted.SCHEMA:
               collector.collect(schema_id, {
+                level: level as unknown as Event['level'],
                 metrics: metrics as unknown as CommandExecuted,
-                timestamp: timestamp as unknown as string
+                timestamp: timestamp as unknown as Event['timestamp']
               });
               break;
             case CurrentChanged.SCHEMA:
               collector.collect(schema_id, {
+                level: level as unknown as Event['level'],
                 metrics: metrics as unknown as CurrentChanged,
-                timestamp: timestamp as unknown as string
+                timestamp: timestamp as unknown as Event['timestamp']
               });
               break;
             case RuntimeError.SCHEMA:
               collector.collect(schema_id, {
+                level: level as unknown as Event['level'],
                 metrics: metrics as unknown as RuntimeError,
-                timestamp: timestamp as unknown as string
+                timestamp: timestamp as unknown as Event['timestamp']
               });
               break;
             default:
