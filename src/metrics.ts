@@ -203,19 +203,15 @@ export namespace IMetrics {
           void events.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
         window.onunhandledrejection = async event => {
-          try {
-            const data: Event<RuntimeError> = {
-              level: LEVEL,
-              metrics: {
-                description: event.reason.message ?? 'onunhandledrejection',
-                type: 'window-level unhandled rejection'
-              },
-              timestamp: new Date().toISOString()
-            };
-            await events.emit({ data, schema_id: SCHEMA, version: VERSION });
-          } catch (error) {
-            // no-op
-          }
+          const data: Event<RuntimeError> = {
+            level: LEVEL,
+            metrics: {
+              description: event.reason.message ?? 'onunhandledrejection',
+              type: 'window-level unhandled rejection'
+            },
+            timestamp: new Date().toISOString()
+          };
+          void events.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
         return new DisposableDelegate(() => undefined);
       }
