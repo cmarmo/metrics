@@ -1,5 +1,6 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { Event as JupyterEvent, ServerConnection } from '@jupyterlab/services';
+import { Event as JupyterEvent } from '@jupyterlab/services';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { CommandRegistry } from '@lumino/commands';
 import { JSONObject, Token } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
@@ -10,43 +11,53 @@ export namespace IMetrics {
 
   export function dispatch(
     events: JupyterEvent.IManager,
-    collector: ICollector
+    collector: ICollector,
+    settings: ISettingRegistry.ISettings
   ): IDisposable {
-    let stop = false;
+    let stopped = false;
+    const guard: Event['level'] = { anonymous: true, sensitivity: 'low' };
+    const allowed = ({ level }: Event): boolean => {
+      if (guard.anonymous && !level.anonymous) {
+        return false;
+      }
+      if (guard.sensitivity === 'low' && level.sensitivity !== 'low') {
+        return false;
+      }
+      if (guard.sensitivity === 'moderate' && level.sensitivity === 'high') {
+        return false;
+      }
+      return true;
+    };
+    const update = (settings: ISettingRegistry.ISettings) => {
+      guard.anonymous = settings.get('anonymous').composite as boolean;
+      guard.sensitivity = settings.get('sensitivity')
+        .composite as Event['level']['sensitivity'];
+    };
+    update(settings);
+    settings.changed.connect(update);
     void (async () => {
       for await (const event of events.stream) {
-        if (stop) {
-          break;
+        if (stopped) {
+          return;
         }
-        const { level, metrics, schema_id, timestamp } = event;
+        const { schema_id } = event;
         switch (schema_id) {
           case Event.CommandExecuted.SCHEMA:
-            void collector.collect(schema_id, {
-              level: level as unknown as Event['level'],
-              metrics: metrics as unknown as Event.CommandExecuted,
-              timestamp: timestamp as unknown as Event['timestamp']
-            });
-            break;
           case Event.CurrentChanged.SCHEMA:
-            void collector.collect(schema_id, {
-              level: level as unknown as Event['level'],
-              metrics: metrics as unknown as Event.CurrentChanged,
-              timestamp: timestamp as unknown as Event['timestamp']
-            });
-            break;
           case Event.RuntimeError.SCHEMA:
-            void collector.collect(schema_id, {
-              level: level as unknown as Event['level'],
-              metrics: metrics as unknown as Event.RuntimeError,
-              timestamp: timestamp as unknown as Event['timestamp']
-            });
+            if (allowed(event as unknown as Event)) {
+              void collector.collect(schema_id, event as unknown as Event);
+            }
             break;
           default:
             continue;
         }
       }
     })();
-    return new DisposableDelegate(() => void (stop = true));
+    return new DisposableDelegate(() => {
+      stopped = true;
+      settings.changed.disconnect(update);
+    });
   }
 
   export interface ICollector {
@@ -84,6 +95,11 @@ export namespace IMetrics {
     }
 
     export namespace CommandExecuted {
+      export const LEVEL: Event['level'] = {
+        anonymous: false,
+        sensitivity: 'high'
+      };
+
       export const VERSION = '1';
 
       export const SCHEMA = `${SCHEMAS}/metrics/command-executed/v${VERSION}`;
@@ -98,7 +114,7 @@ export namespace IMetrics {
         ) => {
           const { SCHEMA, VERSION } = CommandExecuted;
           const data: Event<CommandExecuted> = {
-            level: { anonymous: false, sensitivity: 'high' },
+            level: LEVEL,
             metrics: {
               args: args as unknown as any,
               command: id,
@@ -122,6 +138,11 @@ export namespace IMetrics {
     }
 
     export namespace CurrentChanged {
+      export const LEVEL: Event['level'] = {
+        anonymous: false,
+        sensitivity: 'high'
+      };
+
       export const VERSION = '1';
 
       export const SCHEMA = `${SCHEMAS}/metrics/current-changed/v${VERSION}`;
@@ -139,7 +160,7 @@ export namespace IMetrics {
           }
           const { SCHEMA, VERSION } = CurrentChanged;
           const data: Event<CurrentChanged> = {
-            level: { anonymous: false, sensitivity: 'high' },
+            level: LEVEL,
             metrics: { label: newValue.title.label || newValue.title.caption },
             timestamp: new Date().toISOString()
           };
@@ -160,30 +181,40 @@ export namespace IMetrics {
     }
 
     export namespace RuntimeError {
+      export const LEVEL: Event['level'] = {
+        anonymous: false,
+        sensitivity: 'high'
+      };
+
       export const VERSION = '1';
 
       export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
 
       export function broadcast(events: JupyterEvent.IManager): IDisposable {
         window.onerror = (event, source, lineno, colno, error) => {
-          console.log('onerror', event, source, lineno, colno, error);
-          void events.emit({
-            schema_id: SCHEMA,
-            version: VERSION,
-            data: {
-              description: error?.message ?? 'captured by window.onerror',
+          const data: Event<RuntimeError> = {
+            level: LEVEL,
+            metrics: {
+              description: error?.message ?? 'onerror',
               type: 'window-level error'
-            }
-          });
+            },
+            timestamp: new Date().toISOString()
+          };
+          void events.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
         window.onunhandledrejection = async event => {
-          console.log('onunhandledrejection event:', event);
           try {
-            const data = {};
-            await events.emit({ schema_id: SCHEMA, version: VERSION, data });
+            const data: Event<RuntimeError> = {
+              level: LEVEL,
+              metrics: {
+                description: event.reason.message ?? 'onunhandledrejection',
+                type: 'window-level unhandled rejection'
+              },
+              timestamp: new Date().toISOString()
+            };
+            await events.emit({ data, schema_id: SCHEMA, version: VERSION });
           } catch (error) {
-            const { response } = error as ServerConnection.ResponseError;
-            console.warn((await response.json()).message);
+            // no-op
           }
         };
         return new DisposableDelegate(() => undefined);
