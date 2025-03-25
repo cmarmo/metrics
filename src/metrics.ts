@@ -190,29 +190,31 @@ export namespace IMetrics {
       export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
 
       export function broadcast(events: JupyterEvent.IManager): IDisposable {
-        window.onerror = (event, source, lineno, colno, error) => {
+        const errorHandler = (error: ErrorEvent) => {
           const data: Event<RuntimeError> = {
             level: LEVEL,
-            metrics: {
-              description: error?.message ?? 'onerror',
-              type: 'window-level error'
-            },
+            metrics: { description: error.message, type: 'window-level error' },
             timestamp: new Date().toISOString()
           };
           void events.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
-        window.onunhandledrejection = async event => {
+        const rejectionHandler = (error: PromiseRejectionEvent) => {
           const data: Event<RuntimeError> = {
             level: LEVEL,
             metrics: {
-              description: event.reason.message ?? 'onunhandledrejection',
+              description: error.reason.message ?? 'onunhandledrejection',
               type: 'window-level unhandled rejection'
             },
             timestamp: new Date().toISOString()
           };
           void events.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
-        return new DisposableDelegate(() => undefined);
+        window.addEventListener('error', errorHandler);
+        window.addEventListener('unhandledrejection', rejectionHandler);
+        return new DisposableDelegate(() => {
+          window.removeEventListener('error', errorHandler);
+          window.removeEventListener('unhandledrejection', rejectionHandler);
+        });
       }
     }
   }
