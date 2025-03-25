@@ -108,7 +108,7 @@ export namespace IMetrics {
         events: JupyterEvent.IManager,
         commands: CommandRegistry
       ): IDisposable {
-        const commandExecuted = (
+        const handler = (
           _: unknown,
           { args, id }: CommandRegistry.ICommandExecutedArgs
         ) => {
@@ -122,12 +122,11 @@ export namespace IMetrics {
             },
             timestamp: new Date().toISOString()
           };
-          const event = { data, schema_id: SCHEMA, version: VERSION };
-          void events.emit(event);
+          void events.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
-        commands.commandExecuted.connect(commandExecuted);
+        commands.commandExecuted.connect(handler);
         return new DisposableDelegate(() => {
-          commands.commandExecuted.disconnect(commandExecuted);
+          commands.commandExecuted.disconnect(handler);
         });
       }
     }
