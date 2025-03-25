@@ -16,9 +16,6 @@ test('should emit an activation console message', async ({ page }) => {
   await page.goto();
 
   expect(
-    logs.filter(
-      s =>
-        s === '@quantstack/metrics:collector should be replaced, it is a no-op'
-    )
+    logs.filter(s => s === 'JupyterLab extension @notebook-link/metrics is activated!')
   ).toHaveLength(1);
 });

@@ -40,8 +40,12 @@ jobs:
         set -eux
         python -m pip install .[test]
 
+        pytest -vv -r ap --cov notebook_link_metrics
+        jupyter server extension list
+        jupyter server extension list 2>&1 | grep -ie "notebook_link_metrics.*OK"
+
         jupyter labextension list
-        jupyter labextension list 2>&1 | grep -ie "@quantstack/metrics.*OK"
+        jupyter labextension list 2>&1 | grep -ie "@notebook-link/metrics.*OK"
         python -m jupyterlab.browser_check
 
     - name: Package the extension
@@ -50,13 +54,13 @@ jobs:
 
         pip install build
         python -m build
-        pip uninstall -y "quantstack_metrics" jupyterlab
+        pip uninstall -y "notebook_link_metrics" jupyterlab
 
     - name: Upload extension packages
       uses: actions/upload-artifact@v4
       with:
         name: extension-artifacts
-        path: dist/quantstack_metrics*
+        path: dist/notebook_link_metrics*
         if-no-files-found: error
 
   test_isolated:
@@ -79,11 +83,14 @@ jobs:
         sudo rm -rf $(which node)
         sudo rm -rf $(which node)
 
-        pip install "jupyterlab>=4.0.0,<5" quantstack_metrics*.whl
+        pip install "jupyterlab>=4.0.0,<5" notebook_link_metrics*.whl
 
+
+        jupyter server extension list
+        jupyter server extension list 2>&1 | grep -ie "notebook_link_metrics.*OK"
 
         jupyter labextension list
-        jupyter labextension list 2>&1 | grep -ie "@quantstack/metrics.*OK"
+        jupyter labextension list 2>&1 | grep -ie "@notebook-link/metrics.*OK"
         python -m jupyterlab.browser_check --no-browser-test
 
   integration-tests:
@@ -109,7 +116,7 @@ jobs:
     - name: Install the extension
       run: |
         set -eux
-        python -m pip install "jupyterlab>=4.0.0,<5" quantstack_metrics*.whl
+        python -m pip install "jupyterlab>=4.0.0,<5" notebook_link_metrics*.whl
 
     - name: Install dependencies
       working-directory: ui-tests
@@ -138,7 +145,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: quantstack_metrics-playwright-tests
+        name: notebook_link_metrics-playwright-tests
         path: |
           ui-tests/test-results
           ui-tests/playwright-report

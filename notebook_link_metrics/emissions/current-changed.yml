@@ -1,5 +1,5 @@
 $id: https://quantstack.net/schema/metrics/current-changed/v1
-version: 1
+version: "1"
 title: current changed metrics emission
 description: |
   a current activity changed metrics emission

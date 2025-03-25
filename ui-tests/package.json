@@ -1,7 +1,7 @@
 {
-  "name": "@quantstack/metrics-ui-tests",
+  "name": "@notebook-link/metrics-ui-tests",
   "version": "1.0.0",
-  "description": "JupyterLab @quantstack/metrics Integration Tests",
+  "description": "JupyterLab @notebook-link/metrics Integration Tests",
   "private": true,
   "scripts": {
     "start": "jupyter lab --config jupyter_server_test_config.py",

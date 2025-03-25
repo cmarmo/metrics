@@ -1,3 +1,5 @@
+import pathlib
+
 try:
     from ._version import __version__
 except ImportError:
@@ -5,27 +7,25 @@ except ImportError:
     # in editable mode with pip. It is highly recommended to install
     # the package from a stable release or in editable mode: https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs
     import warnings
-    warnings.warn("Importing 'quantstack_metrics' outside a proper installation.")
+    warnings.warn("Importing 'notebook_link_metrics' outside a proper installation.")
     __version__ = "dev"
 
-
-import pathlib
 
 def _jupyter_labextension_paths():
     return [{
         "src": "labextension",
-        "dest": "@quantstack/metrics"
+        "dest": "@notebook-link/metrics"
     }]
 
 
 def _jupyter_server_extension_points():
     return [{
-        "module": "quantstack_metrics"
+        "module": "notebook_link_metrics"
     }]
 
 
 def _load_jupyter_server_extension(app):
-    name = "quantstack_metrics"
+    name = "notebook_link_metrics"
     parent = pathlib.Path(__file__).parent
     app.event_logger.register_event_schema(parent / "emissions" / "command-executed.yml")
     app.event_logger.register_event_schema(parent / "emissions" / "current-changed.yml")

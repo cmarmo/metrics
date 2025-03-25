@@ -1,6 +1,8 @@
-# QuantStack Metrics
+# notebook_link_metrics
 
-An extension for metrics.
+[![Github Actions Status](https://github.com/notebook-link/metrics/workflows/Build/badge.svg)](https://github.com/notebook-link/metrics/actions/workflows/build.yml)
+
+A JupyterLab/JupyterLite extension for Jupyter UI metrics.
 
 ## Requirements
 
@@ -11,7 +13,7 @@ An extension for metrics.
 To install the extension, execute:
 
 ```bash
-pip install quantstack_metrics
+pip install notebook_link_metrics
 ```
 
 ## Uninstall
@@ -19,7 +21,7 @@ pip install quantstack_metrics
 To remove the extension, execute:
 
 ```bash
-pip uninstall quantstack_metrics
+pip uninstall notebook_link_metrics
 ```
 
 ## Contributing
@@ -34,7 +36,7 @@ The `jlpm` command is JupyterLab's pinned version of
 
 ```bash
 # Clone the repo to your local environment
-# Change directory to the quantstack_metrics directory
+# Change directory to the notebook_link_metrics directory
 # Install package in development mode
 pip install -e "."
 # Link your development version of the extension with JupyterLab
@@ -63,12 +65,12 @@ jupyter lab build --minimize=False
 ### Development uninstall
 
 ```bash
-pip uninstall quantstack_metrics
+pip uninstall notebook_link_metrics
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
 command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `@quantstack/metrics` within that folder.
+folder is located. Then you can remove the symlink named `@notebook-link/metrics` within that folder.
 
 ### Testing the extension
 

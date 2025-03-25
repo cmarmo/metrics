@@ -1,7 +1,7 @@
 {
   "jupyter.lab.shortcuts": [],
-  "title": "@quantstack/metrics",
-  "description": "@quantstack/metrics settings.",
+  "title": "@notebook-link/metrics",
+  "description": "@notebook-link/metrics settings.",
   "type": "object",
   "properties": {
     "anonymous": {

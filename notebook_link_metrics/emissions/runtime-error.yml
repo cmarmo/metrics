@@ -1,8 +1,8 @@
-$id: https://quantstack.net/schema/metrics/command-executed/v1
-version: 1
-title: command executed metrics emission
+$id: https://quantstack.net/schema/metrics/runtime-error/v1
+version: "1"
+title: runtime error metrics emission
 description: |
-  a command execution metrics emission
+  a runtime error event metrics emission
 type: object
 properties:
   level:
@@ -18,22 +18,13 @@ properties:
       anonymous:
         type: boolean
         default: false
-      required:
-        - anonymous
-        - sensitivity
   metrics:
     type: object
     properties:
-      command:
+      type:
         type: string
-      args:
-        type: object
-        additionalProperties: true
-      label:
-        optional: true
+      description:
         type: string
-    required:
-      - command
   timestamp:
     type: string
 required:

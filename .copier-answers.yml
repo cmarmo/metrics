@@ -1,14 +1,14 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: v4.3.5
+_commit: v4.3.8
 _src_path: https://github.com/jupyterlab/extension-template
 author_email: git@darian.link
 author_name: Afshin T. Darian
 has_binder: false
 has_settings: true
-kind: frontend
-labextension_name: '@quantstack/metrics'
-project_short_description: An extension for metrics
-python_name: quantstack_metrics
-repository: https://github.com/quantstack/metrics
+kind: server
+labextension_name: '@notebook-link/metrics'
+project_short_description: A JupyterLab/JupyterLite extension for Jupyter UI metrics.
+python_name: notebook_link_metrics
+repository: https://github.com/notebook-link/metrics
 test: true
 
