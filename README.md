@@ -1,7 +1,5 @@
 # notebook_link_metrics
 
-[![Github Actions Status](https://github.com/notebook-link/metrics/workflows/Build/badge.svg)](https://github.com/notebook-link/metrics/actions/workflows/build.yml)
-
 A JupyterLab/JupyterLite extension for Jupyter UI metrics.
 
 ## Requirements
