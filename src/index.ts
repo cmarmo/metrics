@@ -3,15 +3,15 @@ import { DisposableSet, IDisposable } from '@lumino/disposable';
 import { IMetrics } from './metrics';
 
 const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
-  id: '@quantstack/metrics:collector',
+  id: '@notebook-link/metrics:collector',
   description: 'A collector for metrics emissions',
   provides: IMetrics.ICollector,
   activate: () => ({ collect: async () => undefined })
 };
 
 const emitter: JupyterFrontEndPlugin<void> = {
-  id: '@quantstack/metrics:emitter',
-  description: 'An extension that emits metrics events',
+  id: '@notebook-link/metrics:emitter',
+  description: 'An extension that emits and collects metrics',
   autoStart: true,
   requires: [IMetrics.ICollector],
   ...((set?: IDisposable) => ({

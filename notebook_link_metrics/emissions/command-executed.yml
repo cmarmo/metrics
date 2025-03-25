@@ -1,4 +1,4 @@
-$id: https://quantstack.net/schema/metrics/command-executed/v1
+$id: https://schema.notebook.link/metrics/command-executed/v1
 version: "1"
 title: command executed metrics emission
 description: |

@@ -6,7 +6,7 @@ import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { FocusTracker, Widget } from '@lumino/widgets';
 
 export namespace IMetrics {
-  export const ICollector = new Token('@quantstack/metrics:collector');
+  export const ICollector = new Token('@notebook-link/metrics:collector');
 
   export function dispatch(
     events: JupyterEvent.IManager,
@@ -72,7 +72,7 @@ export namespace IMetrics {
   }
 
   export namespace Event {
-    const SCHEMAS = 'https://quantstack.net/schema';
+    const SCHEMAS = 'https://schema.notebook.link';
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface CommandExecuted {
