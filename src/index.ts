@@ -4,9 +4,9 @@ import { IMetrics } from './metrics';
 
 const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
   id: '@notebook-link/metrics:collector',
-  description: 'A collector for metrics emissions',
+  description: 'A no-op collector for metrics emissions',
   provides: IMetrics.ICollector,
-  activate: () => ({ collect: async () => undefined })
+  activate: (): IMetrics.ICollector => ({ collect: async () => undefined })
 };
 
 const emitter: JupyterFrontEndPlugin<void> = {
@@ -14,7 +14,7 @@ const emitter: JupyterFrontEndPlugin<void> = {
   description: 'An extension that emits and collects metrics',
   autoStart: true,
   requires: [IMetrics.ICollector],
-  ...((set?: IDisposable) => ({
+  ...((set: IDisposable | null = null) => ({
     activate: (
       { commands, restored, serviceManager: { events }, shell },
       collector: IMetrics.ICollector
