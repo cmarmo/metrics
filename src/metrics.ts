@@ -1,14 +1,55 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
+import { Event as JupyterEvent, ServerConnection } from '@jupyterlab/services';
 import { CommandRegistry } from '@lumino/commands';
 import { JSONObject, Token } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { FocusTracker, Widget } from '@lumino/widgets';
 
 export namespace IMetrics {
-  export const Collector = new Token('@quantstack/metrics:collector');
+  export const ICollector = new Token('@quantstack/metrics:collector');
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  export interface Collector {
+  export function dispatch(
+    events: JupyterEvent.IManager,
+    collector: ICollector
+  ): IDisposable {
+    let stop = false;
+    void (async () => {
+      for await (const event of events.stream) {
+        if (stop) {
+          break;
+        }
+        const { level, metrics, schema_id, timestamp } = event;
+        switch (schema_id) {
+          case Event.CommandExecuted.SCHEMA:
+            void collector.collect(schema_id, {
+              level: level as unknown as Event['level'],
+              metrics: metrics as unknown as Event.CommandExecuted,
+              timestamp: timestamp as unknown as Event['timestamp']
+            });
+            break;
+          case Event.CurrentChanged.SCHEMA:
+            void collector.collect(schema_id, {
+              level: level as unknown as Event['level'],
+              metrics: metrics as unknown as Event.CurrentChanged,
+              timestamp: timestamp as unknown as Event['timestamp']
+            });
+            break;
+          case Event.RuntimeError.SCHEMA:
+            void collector.collect(schema_id, {
+              level: level as unknown as Event['level'],
+              metrics: metrics as unknown as Event.RuntimeError,
+              timestamp: timestamp as unknown as Event['timestamp']
+            });
+            break;
+          default:
+            continue;
+        }
+      }
+    })();
+    return new DisposableDelegate(() => void (stop = true));
+  }
+
+  export interface ICollector {
     collect: (schema: string, event: Event) => Promise<void>;
   }
 
@@ -47,8 +88,10 @@ export namespace IMetrics {
 
       export const SCHEMA = `${SCHEMAS}/metrics/command-executed/v${VERSION}`;
 
-      export function broadcast(app: JupyterFrontEnd): IDisposable {
-        const { commands, serviceManager } = app;
+      export function broadcast(
+        events: JupyterEvent.IManager,
+        commands: CommandRegistry
+      ): IDisposable {
         const commandExecuted = (
           _: unknown,
           { args, id }: CommandRegistry.ICommandExecutedArgs
@@ -64,7 +107,7 @@ export namespace IMetrics {
             timestamp: new Date().toISOString()
           };
           const event = { data, schema_id: SCHEMA, version: VERSION };
-          void serviceManager.events.emit(event);
+          void events.emit(event);
         };
         commands.commandExecuted.connect(commandExecuted);
         return new DisposableDelegate(() => {
@@ -83,9 +126,11 @@ export namespace IMetrics {
 
       export const SCHEMA = `${SCHEMAS}/metrics/current-changed/v${VERSION}`;
 
-      export function broadcast(app: JupyterFrontEnd): IDisposable {
-        const { serviceManager, shell } = app;
-        const currentChanged = (
+      export function broadcast(
+        events: JupyterEvent.IManager,
+        shell: JupyterFrontEnd.IShell
+      ): IDisposable {
+        const handler = (
           _: unknown,
           { newValue }: FocusTracker.IChangedArgs<Widget>
         ) => {
@@ -99,11 +144,11 @@ export namespace IMetrics {
             timestamp: new Date().toISOString()
           };
           const event = { data, schema_id: SCHEMA, version: VERSION };
-          void serviceManager.events.emit(event);
+          void events.emit(event);
         };
-        shell.currentChanged?.connect(currentChanged);
+        shell.currentChanged?.connect(handler);
         return new DisposableDelegate(() => {
-          shell.currentChanged?.disconnect(currentChanged);
+          shell.currentChanged?.disconnect(handler);
         });
       }
     }
@@ -119,60 +164,30 @@ export namespace IMetrics {
 
       export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
 
-      export function broadcast(app: JupyterFrontEnd): IDisposable {
-        const { events } = app.serviceManager;
-        console.log('charlie', window.onerror, window.onunhandledrejection);
-        void events.emit({ schema_id: SCHEMA, version: VERSION, data: {} });
+      export function broadcast(events: JupyterEvent.IManager): IDisposable {
         window.onerror = (event, source, lineno, colno, error) => {
-          console.log('delta', event);
+          console.log('onerror', event, source, lineno, colno, error);
+          void events.emit({
+            schema_id: SCHEMA,
+            version: VERSION,
+            data: {
+              description: error?.message ?? 'captured by window.onerror',
+              type: 'window-level error'
+            }
+          });
         };
-        window.onunhandledrejection = event => {
-          console.log('echo', event.reason);
+        window.onunhandledrejection = async event => {
+          console.log('onunhandledrejection event:', event);
+          try {
+            const data = {};
+            await events.emit({ schema_id: SCHEMA, version: VERSION, data });
+          } catch (error) {
+            const { response } = error as ServerConnection.ResponseError;
+            console.warn((await response.json()).message);
+          }
         };
         return new DisposableDelegate(() => undefined);
       }
-    }
-
-    export function dispatch(
-      { restored, serviceManager: { events } }: JupyterFrontEnd,
-      collector: Collector
-    ): IDisposable {
-      let stop = false;
-      void (async () => {
-        await restored;
-        for await (const event of events.stream) {
-          if (stop) {
-            break;
-          }
-          const { level, metrics, schema_id, timestamp } = event;
-          switch (schema_id) {
-            case CommandExecuted.SCHEMA:
-              collector.collect(schema_id, {
-                level: level as unknown as Event['level'],
-                metrics: metrics as unknown as CommandExecuted,
-                timestamp: timestamp as unknown as Event['timestamp']
-              });
-              break;
-            case CurrentChanged.SCHEMA:
-              collector.collect(schema_id, {
-                level: level as unknown as Event['level'],
-                metrics: metrics as unknown as CurrentChanged,
-                timestamp: timestamp as unknown as Event['timestamp']
-              });
-              break;
-            case RuntimeError.SCHEMA:
-              collector.collect(schema_id, {
-                level: level as unknown as Event['level'],
-                metrics: metrics as unknown as RuntimeError,
-                timestamp: timestamp as unknown as Event['timestamp']
-              });
-              break;
-            default:
-              continue;
-          }
-        }
-      })();
-      return new DisposableDelegate(() => void (stop = true));
     }
   }
 }

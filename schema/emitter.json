@@ -3,6 +3,17 @@
   "title": "@quantstack/metrics",
   "description": "@quantstack/metrics settings.",
   "type": "object",
-  "properties": {},
+  "properties": {
+    "anonymous": {
+      "title": "Anonymous data emissions only",
+      "default": true,
+      "type": "boolean"
+    },
+    "sensitivity": {
+      "title": "Sensitivity level of emissions",
+      "enum": ["high", "moderate", "low"],
+      "default": "low"
+    }
+  },
   "additionalProperties": false
 }

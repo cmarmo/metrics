@@ -2,29 +2,31 @@ import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 import { DisposableSet, IDisposable } from '@lumino/disposable';
 import { IMetrics } from './metrics';
 
-const collector: JupyterFrontEndPlugin<IMetrics.Collector> = {
+const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
   id: '@quantstack/metrics:collector',
   description: 'A collector for metrics emissions',
-  provides: IMetrics.Collector,
-  activate: () => {
-    console.warn(`${collector.id} should be replaced, it is a no-op`);
-    return { collect: async () => undefined };
-  }
+  provides: IMetrics.ICollector,
+  activate: () => ({ collect: async () => undefined })
 };
 
 const emitter: JupyterFrontEndPlugin<void> = {
   id: '@quantstack/metrics:emitter',
   description: 'An extension that emits metrics events',
   autoStart: true,
-  requires: [IMetrics.Collector],
+  requires: [IMetrics.ICollector],
   ...((set?: IDisposable) => ({
-    activate: (app, collector: IMetrics.Collector) => {
-      set = DisposableSet.from([
-        IMetrics.Event.CommandExecuted.broadcast(app),
-        IMetrics.Event.CurrentChanged.broadcast(app),
-        IMetrics.Event.RuntimeError.broadcast(app),
-        IMetrics.Event.dispatch(app, collector)
-      ]);
+    activate: (
+      { commands, restored, serviceManager: { events }, shell },
+      collector: IMetrics.ICollector
+    ) => {
+      void restored.then(() => {
+        set = DisposableSet.from([
+          IMetrics.dispatch(events, collector),
+          IMetrics.Event.CommandExecuted.broadcast(events, commands),
+          IMetrics.Event.CurrentChanged.broadcast(events, shell),
+          IMetrics.Event.RuntimeError.broadcast(events)
+        ]);
+      });
     },
     deactivate: () => set?.dispose()
   }))()

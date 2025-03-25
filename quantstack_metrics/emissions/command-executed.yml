@@ -14,9 +14,13 @@ properties:
           - high
           - moderate
           - low
+        default: high
       anonymous:
         type: boolean
         default: false
+      required:
+        - anonymous
+        - sensitivity
   metrics:
     type: object
     properties:
