@@ -7,10 +7,14 @@ import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { FocusTracker, Widget } from '@lumino/widgets';
 
 export namespace IMetrics {
-  export const ICollector = new Token('@notebook-link/metrics:collector');
+  export const COLLECTOR = '@notebook-link/metrics:collector';
+
+  export const EMITTER = '@notebook-link/metrics:emitter';
+
+  export const ICollector = new Token(COLLECTOR);
 
   export function dispatch(
-    events: JupyterEvent.IManager,
+    stream: JupyterEvent.Stream,
     collector: ICollector,
     settings: ISettingRegistry.ISettings
   ): IDisposable {
@@ -29,14 +33,15 @@ export namespace IMetrics {
       return true;
     };
     const update = (settings: ISettingRegistry.ISettings) => {
-      guard.anonymous = settings.get('anonymous').composite as boolean;
-      guard.sensitivity = settings.get('sensitivity')
-        .composite as Event['level']['sensitivity'];
+      const anonymous = settings.get('anonymous').composite;
+      const sensitivity = settings.get('sensitivity').composite;
+      guard.anonymous = anonymous as Event['level']['anonymous'];
+      guard.sensitivity = sensitivity as Event['level']['sensitivity'];
     };
     update(settings);
     settings.changed.connect(update);
     void (async () => {
-      for await (const event of events.stream) {
+      for await (const event of stream) {
         if (stopped) {
           return;
         }
@@ -64,10 +69,9 @@ export namespace IMetrics {
     collect: (schema: string, event: Event) => Promise<void>;
   }
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  export interface Event<
+  export type Event<
     T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
-  > {
+  > = {
     level: {
       anonymous: boolean;
 
@@ -80,19 +84,20 @@ export namespace IMetrics {
      * ISO timestamp
      */
     timestamp: string;
-  }
+  };
 
   export namespace Event {
     const SCHEMAS = 'https://schema.notebook.link';
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    export interface CommandExecuted {
+    export type Emitter = { emit(event: JupyterEvent.Request): Promise<void> };
+
+    export type CommandExecuted = {
       label?: string;
 
       command: string;
 
       args?: JSONObject;
-    }
+    };
 
     export namespace CommandExecuted {
       export const LEVEL: Event['level'] = {
@@ -105,7 +110,7 @@ export namespace IMetrics {
       export const SCHEMA = `${SCHEMAS}/metrics/command-executed/v${VERSION}`;
 
       export function broadcast(
-        events: JupyterEvent.IManager,
+        emitter: Emitter,
         commands: CommandRegistry
       ): IDisposable {
         const handler = (
@@ -122,7 +127,7 @@ export namespace IMetrics {
             },
             timestamp: new Date().toISOString()
           };
-          void events.emit({ data, schema_id: SCHEMA, version: VERSION });
+          void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
         commands.commandExecuted.connect(handler);
         return new DisposableDelegate(() => {
@@ -131,10 +136,9 @@ export namespace IMetrics {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    export interface CurrentChanged {
+    export type CurrentChanged = {
       label: string;
-    }
+    };
 
     export namespace CurrentChanged {
       export const LEVEL: Event['level'] = {
@@ -147,7 +151,7 @@ export namespace IMetrics {
       export const SCHEMA = `${SCHEMAS}/metrics/current-changed/v${VERSION}`;
 
       export function broadcast(
-        events: JupyterEvent.IManager,
+        emitter: Emitter,
         shell: JupyterFrontEnd.IShell
       ): IDisposable {
         const handler = (
@@ -157,14 +161,12 @@ export namespace IMetrics {
           if (newValue === null) {
             return;
           }
-          const { SCHEMA, VERSION } = CurrentChanged;
           const data: Event<CurrentChanged> = {
             level: LEVEL,
             metrics: { label: newValue.title.label || newValue.title.caption },
             timestamp: new Date().toISOString()
           };
-          const event = { data, schema_id: SCHEMA, version: VERSION };
-          void events.emit(event);
+          void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
         shell.currentChanged?.connect(handler);
         return new DisposableDelegate(() => {
@@ -173,11 +175,10 @@ export namespace IMetrics {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    export interface RuntimeError {
+    export type RuntimeError = {
       type: string;
       description: string;
-    }
+    };
 
     export namespace RuntimeError {
       export const LEVEL: Event['level'] = {
@@ -189,14 +190,14 @@ export namespace IMetrics {
 
       export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
 
-      export function broadcast(events: JupyterEvent.IManager): IDisposable {
+      export function broadcast(emitter: Emitter): IDisposable {
         const errorHandler = (error: ErrorEvent) => {
           const data: Event<RuntimeError> = {
             level: LEVEL,
             metrics: { description: error.message, type: 'window-level error' },
             timestamp: new Date().toISOString()
           };
-          void events.emit({ data, schema_id: SCHEMA, version: VERSION });
+          void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
         const rejectionHandler = (error: PromiseRejectionEvent) => {
           const data: Event<RuntimeError> = {
@@ -207,7 +208,7 @@ export namespace IMetrics {
             },
             timestamp: new Date().toISOString()
           };
-          void events.emit({ data, schema_id: SCHEMA, version: VERSION });
+          void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
         window.addEventListener('error', errorHandler);
         window.addEventListener('unhandledrejection', rejectionHandler);
