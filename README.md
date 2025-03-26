@@ -8,10 +8,10 @@ A JupyterLab/JupyterLite extension for Jupyter UI metrics.
 
 ## Install
 
-To install the extension, execute:
+This extension is currently unpublished. To install the extension, execute:
 
 ```bash
-pip install notebook_link_metrics
+pip install git+https://github.com/notebook-link/metrics.git
 ```
 
 ## Uninstall
