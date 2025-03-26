@@ -32,16 +32,16 @@ export namespace IMetrics {
   export namespace Event {
     const SCHEMAS = 'https://schema.notebook.link';
 
+    const timestamp = () => new Date().toISOString();
+
     export type Emitter = { emit(event: JupyterEvent.Request): Promise<void> };
 
-    export const timestamp = () => new Date().toISOString();
-
     export type CommandExecuted = {
-      label?: string;
+      args?: JSONObject;
 
       command: string;
 
-      args?: JSONObject;
+      label?: string;
     };
 
     export namespace CommandExecuted {
@@ -76,9 +76,7 @@ export namespace IMetrics {
       }
     }
 
-    export type CurrentChanged = {
-      label: string;
-    };
+    export type CurrentChanged = { label: string };
 
     export namespace CurrentChanged {
       export const VERSION = '1';
