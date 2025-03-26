@@ -1,11 +1,7 @@
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 import { Event as JupyterEvent } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
-import {
-  DisposableDelegate,
-  DisposableSet,
-  IDisposable
-} from '@lumino/disposable';
+import { DisposableDelegate, DisposableSet } from '@lumino/disposable';
 import { IMetrics } from './metrics';
 
 const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
@@ -20,7 +16,7 @@ const emitter: JupyterFrontEndPlugin<void> = {
   description: 'An extension that emits and collects metrics',
   autoStart: true,
   requires: [IMetrics.ICollector, ISettingRegistry],
-  ...((set: IDisposable | null = null) => ({
+  ...((set: DisposableSet | null = null) => ({
     activate: (
       { commands, restored, serviceManager: { events }, shell },
       collector: IMetrics.ICollector,
@@ -49,7 +45,7 @@ namespace Private {
     stream: JupyterEvent.Stream,
     collector: IMetrics.ICollector,
     settings: ISettingRegistry.ISettings
-  ): IDisposable {
+  ) {
     let stopped = false;
     const guard: Event['level'] = { anonymous: true, sensitivity: 'low' };
     const allowed = ({ level }: Event): boolean => {

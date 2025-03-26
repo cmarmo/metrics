@@ -10,7 +10,7 @@ export namespace IMetrics {
 
   export const EMITTER = '@notebook-link/metrics:emitter';
 
-  export const ICollector = new Token(COLLECTOR);
+  export const ICollector = new Token<ICollector>(COLLECTOR);
 
   export interface ICollector {
     collect: (schema: string, event: Event) => Promise<void>;
