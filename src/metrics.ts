@@ -19,11 +19,7 @@ export namespace IMetrics {
   export type Event<
     T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
   > = {
-    level: {
-      anonymous: boolean;
-
-      sensitivity: 'high' | 'moderate' | 'low';
-    };
+    level: { anonymous: boolean; sensitivity: 'high' | 'moderate' | 'low' };
 
     metrics: T;
 
