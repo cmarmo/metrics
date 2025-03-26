@@ -1,6 +1,5 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { Event as JupyterEvent } from '@jupyterlab/services';
-import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { CommandRegistry } from '@lumino/commands';
 import { JSONObject, Token } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
@@ -12,58 +11,6 @@ export namespace IMetrics {
   export const EMITTER = '@notebook-link/metrics:emitter';
 
   export const ICollector = new Token(COLLECTOR);
-
-  export function dispatch(
-    stream: JupyterEvent.Stream,
-    collector: ICollector,
-    settings: ISettingRegistry.ISettings
-  ): IDisposable {
-    let stopped = false;
-    const guard: Event['level'] = { anonymous: true, sensitivity: 'low' };
-    const allowed = ({ level }: Event): boolean => {
-      if (guard.anonymous && !level.anonymous) {
-        return false;
-      }
-      if (guard.sensitivity === 'low' && level.sensitivity !== 'low') {
-        return false;
-      }
-      if (guard.sensitivity === 'moderate' && level.sensitivity === 'high') {
-        return false;
-      }
-      return true;
-    };
-    const update = (settings: ISettingRegistry.ISettings) => {
-      const anonymous = settings.get('anonymous').composite;
-      const sensitivity = settings.get('sensitivity').composite;
-      guard.anonymous = anonymous as Event['level']['anonymous'];
-      guard.sensitivity = sensitivity as Event['level']['sensitivity'];
-    };
-    update(settings);
-    settings.changed.connect(update);
-    void (async () => {
-      for await (const event of stream) {
-        if (stopped) {
-          return;
-        }
-        const { schema_id } = event;
-        switch (schema_id) {
-          case Event.CommandExecuted.SCHEMA:
-          case Event.CurrentChanged.SCHEMA:
-          case Event.RuntimeError.SCHEMA:
-            if (allowed(event as unknown as Event)) {
-              void collector.collect(schema_id, event as unknown as Event);
-            }
-            break;
-          default:
-            continue;
-        }
-      }
-    })();
-    return new DisposableDelegate(() => {
-      stopped = true;
-      settings.changed.disconnect(update);
-    });
-  }
 
   export interface ICollector {
     collect: (schema: string, event: Event) => Promise<void>;
@@ -91,6 +38,8 @@ export namespace IMetrics {
 
     export type Emitter = { emit(event: JupyterEvent.Request): Promise<void> };
 
+    export const timestamp = () => new Date().toISOString();
+
     export type CommandExecuted = {
       label?: string;
 
@@ -100,11 +49,6 @@ export namespace IMetrics {
     };
 
     export namespace CommandExecuted {
-      export const LEVEL: Event['level'] = {
-        anonymous: false,
-        sensitivity: 'high'
-      };
-
       export const VERSION = '1';
 
       export const SCHEMA = `${SCHEMAS}/metrics/command-executed/v${VERSION}`;
@@ -119,13 +63,13 @@ export namespace IMetrics {
         ) => {
           const { SCHEMA, VERSION } = CommandExecuted;
           const data: Event<CommandExecuted> = {
-            level: LEVEL,
+            level: { anonymous: false, sensitivity: 'high' },
             metrics: {
               args: args as unknown as any,
               command: id,
               label: commands.label(id, args) || commands.caption(id, args)
             },
-            timestamp: new Date().toISOString()
+            timestamp: timestamp()
           };
           void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
@@ -141,11 +85,6 @@ export namespace IMetrics {
     };
 
     export namespace CurrentChanged {
-      export const LEVEL: Event['level'] = {
-        anonymous: false,
-        sensitivity: 'high'
-      };
-
       export const VERSION = '1';
 
       export const SCHEMA = `${SCHEMAS}/metrics/current-changed/v${VERSION}`;
@@ -162,9 +101,9 @@ export namespace IMetrics {
             return;
           }
           const data: Event<CurrentChanged> = {
-            level: LEVEL,
+            level: { anonymous: false, sensitivity: 'high' },
             metrics: { label: newValue.title.label || newValue.title.caption },
-            timestamp: new Date().toISOString()
+            timestamp: timestamp()
           };
           void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
@@ -175,17 +114,9 @@ export namespace IMetrics {
       }
     }
 
-    export type RuntimeError = {
-      type: string;
-      description: string;
-    };
+    export type RuntimeError = { type: string; description: string };
 
     export namespace RuntimeError {
-      export const LEVEL: Event['level'] = {
-        anonymous: false,
-        sensitivity: 'high'
-      };
-
       export const VERSION = '1';
 
       export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
@@ -193,20 +124,20 @@ export namespace IMetrics {
       export function broadcast(emitter: Emitter): IDisposable {
         const errorHandler = (error: ErrorEvent) => {
           const data: Event<RuntimeError> = {
-            level: LEVEL,
+            level: { anonymous: false, sensitivity: 'high' },
             metrics: { description: error.message, type: 'window-level error' },
-            timestamp: new Date().toISOString()
+            timestamp: timestamp()
           };
           void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
         const rejectionHandler = (error: PromiseRejectionEvent) => {
           const data: Event<RuntimeError> = {
-            level: LEVEL,
+            level: { anonymous: false, sensitivity: 'high' },
             metrics: {
               description: error.reason.message ?? 'onunhandledrejection',
               type: 'window-level unhandled rejection'
             },
-            timestamp: new Date().toISOString()
+            timestamp: timestamp()
           };
           void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
         };
