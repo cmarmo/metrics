@@ -47,24 +47,18 @@ namespace Private {
     settings: ISettingRegistry.ISettings
   ) {
     let stopped = false;
-    const guard: Event['level'] = { anonymous: true, sensitivity: 'low' };
-    const allowed = ({ level }: Event): boolean => {
-      if (guard.anonymous && !level.anonymous) {
-        return false;
-      }
-      if (guard.sensitivity === 'low' && level.sensitivity !== 'low') {
-        return false;
-      }
-      if (guard.sensitivity === 'moderate' && level.sensitivity === 'high') {
-        return false;
-      }
-      return true;
+    const filter: Event['level'] = { anonymous: true, sensitivity: 'low' };
+    const allowed = ({ level: { anonymous, sensitivity } }: Event) => {
+      const value = { low: 1, moderate: 2, high: 3 };
+      const safe = value[sensitivity] <= value[filter.sensitivity];
+      const discreet = anonymous || !filter.anonymous;
+      return safe && discreet;
     };
     const update = (settings: ISettingRegistry.ISettings) => {
       const anonymous = settings.get('anonymous').composite;
       const sensitivity = settings.get('sensitivity').composite;
-      guard.anonymous = anonymous as Event['level']['anonymous'];
-      guard.sensitivity = sensitivity as Event['level']['sensitivity'];
+      filter.anonymous = anonymous as Event['level']['anonymous'];
+      filter.sensitivity = sensitivity as Event['level']['sensitivity'];
     };
     update(settings);
     settings.changed.connect(update);
