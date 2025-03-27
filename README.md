@@ -27,7 +27,9 @@ interface ICollector {
   collect: (schema: string, event: Event) => Promise<void>;
 }
 ```
+
 An extension that replaces the default no-op collector would have this shape:
+
 ```ts
 const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
   id: 'my-collector-extension',
