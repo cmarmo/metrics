@@ -7,16 +7,21 @@ A JupyterLab/JupyterLite extension for Jupyter UI metrics.
 This package contains three Jupyter extensions.
 
 ### Jupyter server extension
+
 This extension, `notebook_link_metrics`, which register's event schemas for three types of metrics events:
-  1. `CommandExecuted` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time the command registry executes a command
-  2. `CurrentChanged` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a non-`null` new value is emitted by the application shell's `currentChanged` signal
-  3. `RuntimeError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time an `error` or `unhandledpromiserejection` listener on the application `window` is invoked
+
+1. `CommandExecuted` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time the command registry executes a command
+2. `CurrentChanged` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a non-`null` new value is emitted by the application shell's `currentChanged` signal
+3. `RuntimeError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time an `error` or `unhandledpromiserejection` listener on the application `window` is invoked
 
 ### JupyterLab/JupyterLite emitter extension
+
 This extension emits the events registered by the server extension (in JupyterLite, these events are emitted without a server validating them, in JupyterLab, the schemas registered by the server extension are used for validation of emissions).
 
 ### JupyterLab/JupyterLite collector extension
+
 A JupyterLab/JupyterLite extension that collects metrics emissions. The default implementation is a no-op and in production, the extension `@notebook-link/metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the emitter extension to use. The `interface` for a collector is minimal:
+
 ```ts
 interface ICollector {
   collect: (schema: string, event: Event) => Promise<void>;
