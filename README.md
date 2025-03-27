@@ -20,12 +20,25 @@ This extension emits the events registered by the server extension (in JupyterLi
 
 ### JupyterLab/JupyterLite collector extension
 
-A JupyterLab/JupyterLite extension that collects metrics emissions. The default implementation is a no-op and in production, the extension `@notebook-link/metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the emitter extension to use. The `interface` for a collector is minimal:
+This is an extension that collects metrics emissions. The default implementation is a no-op and in production, the extension `@notebook-link/metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the emitter extension to use. The `interface` for a collector is minimal:
 
 ```ts
 interface ICollector {
   collect: (schema: string, event: Event) => Promise<void>;
 }
+```
+An extension that replaces the default no-op collector would have this shape:
+```ts
+const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
+  id: 'my-collector-extension',
+  description: 'A collector for metrics emissions',
+  provides: IMetrics.ICollector,
+  activate: (): IMetrics.ICollector => ({
+    collect: async (schema: string, event: IMetrics.Event) => {
+      // Save emission here...
+    }
+  })
+};
 ```
 
 ## Requirements
