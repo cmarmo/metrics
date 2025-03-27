@@ -24,7 +24,7 @@ This is an extension that collects metrics emissions. The default implementation
 
 ```ts
 interface ICollector {
-  collect: (schema: string, event: Event) => Promise<void>;
+  collect: (schema: string, event: IMetrics.Event) => Promise<void>;
 }
 ```
 
