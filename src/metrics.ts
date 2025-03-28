@@ -5,37 +5,72 @@ import { JSONObject, Token } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { FocusTracker, Widget } from '@lumino/widgets';
 
+/**
+ * The namespace for the metrics extension.
+ */
 export namespace IMetrics {
+  /**
+   * ID of the collector plugin.
+   */
   export const COLLECTOR = '@notebook-link/metrics:collector';
 
+  /**
+   * ID of the emitter plugin.
+   */
   export const EMITTER = '@notebook-link/metrics:emitter';
 
+  /**
+   * Token for requiring/providing a collector plugin.
+   */
   export const ICollector = new Token<ICollector>(COLLECTOR);
 
+  /**
+   * The public API of a collector plugin.
+   */
   export interface ICollector {
     collect: (schema: string, event: Event) => Promise<void>;
   }
 
+  /**
+   * A generic metrics event.
+   * @typeparam T - The type of the metrics payload of the event.
+   */
   export type Event<
     T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
   > = {
+    /**
+     * Whether the metrics data is anonymous and how sensitive it is.
+     */
     level: { anonymous: boolean; sensitivity: 'high' | 'moderate' | 'low' };
 
+    /**
+     * The metrics payload.
+     */
     metrics: T;
 
     /**
-     * ISO timestamp
+     * The event timestamp as a string in ISO format.
      */
     timestamp: string;
   };
 
+  /**
+   * The metrics event namespace.
+   */
   export namespace Event {
     const SCHEMAS = 'https://schema.notebook.link';
 
     const timestamp = () => new Date().toISOString();
 
+    /**
+     * A minimal emitter of events
+     * (compatible with e.g., Event.IManager from @jupyterlab/services).
+     */
     export type Emitter = { emit(event: JupyterEvent.Request): Promise<void> };
 
+    /**
+     * Metrics data for a command executed event.
+     */
     export type CommandExecuted = {
       args?: JSONObject;
 
