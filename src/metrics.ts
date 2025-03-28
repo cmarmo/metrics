@@ -5,37 +5,72 @@ import { JSONObject, Token } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { FocusTracker, Widget } from '@lumino/widgets';
 
+/**
+ * The namespace for the metrics extension.
+ */
 export namespace IMetrics {
+  /**
+   * ID of the collector plugin.
+   */
   export const COLLECTOR = '@notebook-link/metrics:collector';
 
+  /**
+   * ID of the emitter plugin.
+   */
   export const EMITTER = '@notebook-link/metrics:emitter';
 
+  /**
+   * Token for requiring/providing a collector plugin.
+   */
   export const ICollector = new Token<ICollector>(COLLECTOR);
 
+  /**
+   * The public API of a collector plugin.
+   */
   export interface ICollector {
     collect: (schema: string, event: Event) => Promise<void>;
   }
 
+  /**
+   * A generic metrics event.
+   * @typeparam T - The type of the metrics payload of the event.
+   */
   export type Event<
     T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
   > = {
+    /**
+     * Whether the metrics data is anonymous and how sensitive it is.
+     */
     level: { anonymous: boolean; sensitivity: 'high' | 'moderate' | 'low' };
 
+    /**
+     * The metrics payload.
+     */
     metrics: T;
 
     /**
-     * ISO timestamp
+     * The event timestamp as a string in ISO format.
      */
     timestamp: string;
   };
 
+  /**
+   * The metrics event namespace.
+   */
   export namespace Event {
     const SCHEMAS = 'https://schema.notebook.link';
 
     const timestamp = () => new Date().toISOString();
 
+    /**
+     * A minimal emitter of events
+     * (compatible with e.g., Event.IManager from @jupyterlab/services).
+     */
     export type Emitter = { emit(event: JupyterEvent.Request): Promise<void> };
 
+    /**
+     * Metrics data for a command executed event.
+     */
     export type CommandExecuted = {
       args?: JSONObject;
 
@@ -44,11 +79,26 @@ export namespace IMetrics {
       label?: string;
     };
 
+    /**
+     * A namespace for command executed metrics.
+     */
     export namespace CommandExecuted {
+      /**
+       * The event schema version.
+       */
       export const VERSION = '1';
 
+      /**
+       * The event schema URL.
+       */
       export const SCHEMA = `${SCHEMAS}/metrics/command-executed/v${VERSION}`;
 
+      /**
+       * Listens for command executed events and broadcasts them.
+       * @param emitter - An event emitter, e.g. JupyterLab's event manager.
+       * @param commands - A command registry.
+       * @returns a disposable that stops broadcasting when disposed.
+       */
       export function broadcast(
         emitter: Emitter,
         commands: CommandRegistry
@@ -76,13 +126,31 @@ export namespace IMetrics {
       }
     }
 
+    /**
+     * The current changed metrics type.
+     */
     export type CurrentChanged = { label: string };
 
+    /**
+     * A namespace for current changed metrics.
+     */
     export namespace CurrentChanged {
+      /**
+       * The event schema version.
+       */
       export const VERSION = '1';
 
+      /**
+       * The event schema URL.
+       */
       export const SCHEMA = `${SCHEMAS}/metrics/current-changed/v${VERSION}`;
 
+      /**
+       * Listens for (shell) current changed signals and broadcasts them.
+       * @param emitter - An event emitter, e.g. JupyterLab's event manager.
+       * @param shell - A Jupyter front-end application shell.
+       * @returns a disposable that stops broadcasting when disposed.
+       */
       export function broadcast(
         emitter: Emitter,
         shell: JupyterFrontEnd.IShell
@@ -108,13 +176,30 @@ export namespace IMetrics {
       }
     }
 
+    /**
+     * The runtime error metrics type.
+     */
     export type RuntimeError = { type: string; description: string };
 
+    /**
+     * A namespace for runtime error metrics.
+     */
     export namespace RuntimeError {
+      /**
+       * The event schema version.
+       */
       export const VERSION = '1';
 
+      /**
+       * The event schema URL.
+       */
       export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
 
+      /**
+       * Listens for window error/unhandledrejection events and broadcasts them.
+       * @param emitter - An event emitter, e.g. JupyterLab's event manager.
+       * @returns a disposable that stops broadcasting when disposed.
+       */
       export function broadcast(emitter: Emitter): IDisposable {
         const errorHandler = (error: ErrorEvent) => {
           const data: Event<RuntimeError> = {
