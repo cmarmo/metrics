@@ -36,6 +36,7 @@ const emitter: JupyterFrontEndPlugin<void> = {
   }))()
 };
 
+export * from './metrics';
 export default [collector, emitter];
 
 namespace Private {
