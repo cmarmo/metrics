@@ -1,9 +1,8 @@
-import { JupyterFrontEnd } from '@jupyterlab/application';
 import { Event as JupyterEvent } from '@jupyterlab/services';
-import { CommandRegistry } from '@lumino/commands';
-import { JSONObject, Token } from '@lumino/coreutils';
-import { DisposableDelegate, IDisposable } from '@lumino/disposable';
-import { FocusTracker, Widget } from '@lumino/widgets';
+import { Token } from '@lumino/coreutils';
+import { CommandExecuted as CE_IMPORT } from './emissions/command-executed';
+import { CurrentChanged as CC_IMPORT } from './emissions/current-changed';
+import { RuntimeError as RE_IMPORT } from './emissions/runtime-error';
 
 /**
  * The namespace for the metrics extension.
@@ -29,6 +28,14 @@ export namespace IMetrics {
    */
   export interface ICollector {
     collect: (schema: string, event: Event) => Promise<void>;
+  }
+
+  /**
+   * A minimal emitter of metrics events,
+   * (compatible with e.g., Event.IManager from @jupyterlab/services).
+   */
+  export interface IEmitter {
+    emit(event: JupyterEvent.Request): Promise<void>;
   }
 
   /**
@@ -58,175 +65,8 @@ export namespace IMetrics {
    * The metrics event namespace.
    */
   export namespace Event {
-    const SCHEMAS = 'https://schema.notebook.link';
-
-    const timestamp = () => new Date().toISOString();
-
-    /**
-     * A minimal emitter of events
-     * (compatible with e.g., Event.IManager from @jupyterlab/services).
-     */
-    export type Emitter = { emit(event: JupyterEvent.Request): Promise<void> };
-
-    /**
-     * Metrics data for a command executed event.
-     */
-    export type CommandExecuted = {
-      args?: JSONObject;
-
-      command: string;
-
-      label?: string;
-    };
-
-    /**
-     * A namespace for command executed metrics.
-     */
-    export namespace CommandExecuted {
-      /**
-       * The event schema version.
-       */
-      export const VERSION = '1';
-
-      /**
-       * The event schema URL.
-       */
-      export const SCHEMA = `${SCHEMAS}/metrics/command-executed/v${VERSION}`;
-
-      /**
-       * Listens for command executed events and broadcasts them.
-       * @param emitter - An event emitter, e.g. JupyterLab's event manager.
-       * @param commands - A command registry.
-       * @returns a disposable that stops broadcasting when disposed.
-       */
-      export function broadcast(
-        emitter: Emitter,
-        commands: CommandRegistry
-      ): IDisposable {
-        const handler = (
-          _: unknown,
-          { args, id }: CommandRegistry.ICommandExecutedArgs
-        ) => {
-          const { SCHEMA, VERSION } = CommandExecuted;
-          const data: Event<CommandExecuted> = {
-            level: { anonymous: false, sensitivity: 'high' },
-            metrics: {
-              args: args as unknown as any,
-              command: id,
-              label: commands.label(id, args) || commands.caption(id, args)
-            },
-            timestamp: timestamp()
-          };
-          void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
-        };
-        commands.commandExecuted.connect(handler);
-        return new DisposableDelegate(() => {
-          commands.commandExecuted.disconnect(handler);
-        });
-      }
-    }
-
-    /**
-     * The current changed metrics type.
-     */
-    export type CurrentChanged = { label: string };
-
-    /**
-     * A namespace for current changed metrics.
-     */
-    export namespace CurrentChanged {
-      /**
-       * The event schema version.
-       */
-      export const VERSION = '1';
-
-      /**
-       * The event schema URL.
-       */
-      export const SCHEMA = `${SCHEMAS}/metrics/current-changed/v${VERSION}`;
-
-      /**
-       * Listens for (shell) current changed signals and broadcasts them.
-       * @param emitter - An event emitter, e.g. JupyterLab's event manager.
-       * @param shell - A Jupyter front-end application shell.
-       * @returns a disposable that stops broadcasting when disposed.
-       */
-      export function broadcast(
-        emitter: Emitter,
-        shell: JupyterFrontEnd.IShell
-      ): IDisposable {
-        const handler = (
-          _: unknown,
-          { newValue }: FocusTracker.IChangedArgs<Widget>
-        ) => {
-          if (newValue === null) {
-            return;
-          }
-          const data: Event<CurrentChanged> = {
-            level: { anonymous: false, sensitivity: 'high' },
-            metrics: { label: newValue.title.label || newValue.title.caption },
-            timestamp: timestamp()
-          };
-          void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
-        };
-        shell.currentChanged?.connect(handler);
-        return new DisposableDelegate(() => {
-          shell.currentChanged?.disconnect(handler);
-        });
-      }
-    }
-
-    /**
-     * The runtime error metrics type.
-     */
-    export type RuntimeError = { type: string; description: string };
-
-    /**
-     * A namespace for runtime error metrics.
-     */
-    export namespace RuntimeError {
-      /**
-       * The event schema version.
-       */
-      export const VERSION = '1';
-
-      /**
-       * The event schema URL.
-       */
-      export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
-
-      /**
-       * Listens for window error/unhandledrejection events and broadcasts them.
-       * @param emitter - An event emitter, e.g. JupyterLab's event manager.
-       * @returns a disposable that stops broadcasting when disposed.
-       */
-      export function broadcast(emitter: Emitter): IDisposable {
-        const errorHandler = (error: ErrorEvent) => {
-          const data: Event<RuntimeError> = {
-            level: { anonymous: false, sensitivity: 'high' },
-            metrics: { description: error.message, type: 'window-level error' },
-            timestamp: timestamp()
-          };
-          void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
-        };
-        const rejectionHandler = (error: PromiseRejectionEvent) => {
-          const data: Event<RuntimeError> = {
-            level: { anonymous: false, sensitivity: 'high' },
-            metrics: {
-              description: error.reason.message ?? 'onunhandledrejection',
-              type: 'window-level unhandled rejection'
-            },
-            timestamp: timestamp()
-          };
-          void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
-        };
-        window.addEventListener('error', errorHandler);
-        window.addEventListener('unhandledrejection', rejectionHandler);
-        return new DisposableDelegate(() => {
-          window.removeEventListener('error', errorHandler);
-          window.removeEventListener('unhandledrejection', rejectionHandler);
-        });
-      }
-    }
+    export import CommandExecuted = CE_IMPORT;
+    export import CurrentChanged = CC_IMPORT;
+    export import RuntimeError = RE_IMPORT;
   }
 }
