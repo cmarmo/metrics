@@ -79,11 +79,26 @@ export namespace IMetrics {
       label?: string;
     };
 
+    /**
+     * A namespace for command executed metrics.
+     */
     export namespace CommandExecuted {
+      /**
+       * The event schema version.
+       */
       export const VERSION = '1';
 
+      /**
+       * The event schema URL.
+       */
       export const SCHEMA = `${SCHEMAS}/metrics/command-executed/v${VERSION}`;
 
+      /**
+       * Listens for command executed events and broadcasts them.
+       * @param emitter - An event emitter, e.g. JupyterLab's event manager.
+       * @param commands - A command registry.
+       * @returns a disposable that stops broadcasting when disposed.
+       */
       export function broadcast(
         emitter: Emitter,
         commands: CommandRegistry
@@ -111,13 +126,31 @@ export namespace IMetrics {
       }
     }
 
+    /**
+     * The current changed metrics type.
+     */
     export type CurrentChanged = { label: string };
 
+    /**
+     * A namespace for current changed metrics.
+     */
     export namespace CurrentChanged {
+      /**
+       * The event schema version.
+       */
       export const VERSION = '1';
 
+      /**
+       * The event schema URL.
+       */
       export const SCHEMA = `${SCHEMAS}/metrics/current-changed/v${VERSION}`;
 
+      /**
+       * Listens for (shell) current changed signals and broadcasts them.
+       * @param emitter - An event emitter, e.g. JupyterLab's event manager.
+       * @param shell - A Jupyter front-end application shell.
+       * @returns a disposable that stops broadcasting when disposed.
+       */
       export function broadcast(
         emitter: Emitter,
         shell: JupyterFrontEnd.IShell
@@ -143,13 +176,30 @@ export namespace IMetrics {
       }
     }
 
+    /**
+     * The runtime error metrics type.
+     */
     export type RuntimeError = { type: string; description: string };
 
+    /**
+     * A namespace for runtime error metrics.
+     */
     export namespace RuntimeError {
+      /**
+       * The event schema version.
+       */
       export const VERSION = '1';
 
+      /**
+       * The event schema URL.
+       */
       export const SCHEMA = `${SCHEMAS}/metrics/runtime-error/v${VERSION}`;
 
+      /**
+       * Listens for window error/unhandledrejection events and broadcasts them.
+       * @param emitter - An event emitter, e.g. JupyterLab's event manager.
+       * @returns a disposable that stops broadcasting when disposed.
+       */
       export function broadcast(emitter: Emitter): IDisposable {
         const errorHandler = (error: ErrorEvent) => {
           const data: Event<RuntimeError> = {
