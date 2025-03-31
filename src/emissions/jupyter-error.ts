@@ -52,27 +52,34 @@ export namespace JupyterError {
    * @returns a disposable that stops broadcasting when disposed.
    *
    * ### Notes
-   * This function monkey-patches the default MIME renderer factory for stderr
-   * output to check each rendered model for a bundled Jupyter error and to emit
-   * a metrics event if a Jupyter error is found. When disposed, because there
-   * is no way to remove a MIME renderer factory from the rendermime registry,
-   * the behavior of the monkey-patched factory is to pass through rendering to
-   * the original factory and emit nothing.
+   * This function adds a low rank (high priority) MIME renderer factory for
+   * stderr output to the given rendermime registry. It monkey-patches the
+   * default MIME renderers that are instantiated by the default factory for
+   * stderr output. It checks each rendered model for a bundled Jupyter error
+   * and emits a metrics event if a Jupyter error is found. When disposed,
+   * because there is no way to remove a MIME renderer factory from the
+   * rendermime registry, the behavior of the factory is to return the same
+   * renderer the default factory does and for each extant monkey-patched
+   * renderer to pass through rendering to the original renderer and emit
+   * nothing.
    */
   export function broadcast(
     emitter: IMetrics.IEmitter,
     rendermimes: IRenderMimeRegistry
   ): IDisposable {
     const original = rendermimes.getFactory(MIME_STDERR)!;
-    let disposed = false;
+    let stopped = false;
     rendermimes.addFactory({
       ...original,
       defaultRank: 10,
       createRenderer: options => {
         const renderer = original.createRenderer(options);
+        if (stopped) {
+          return renderer;
+        }
         const { renderModel } = renderer;
         (renderer as unknown as IRenderMime.IRenderer).renderModel = model => {
-          if (!disposed && model.data[MIME_ERROR]) {
+          if (!stopped && model.data[MIME_ERROR]) {
             const data: IMetrics.Event<JupyterError> = {
               level: { anonymous: false, sensitivity: 'high' },
               metrics: model.data[MIME_ERROR] as JupyterError,
@@ -85,6 +92,6 @@ export namespace JupyterError {
         return renderer;
       }
     });
-    return new DisposableDelegate(() => void (disposed = true));
+    return new DisposableDelegate(() => void (stopped = true));
   }
 }
