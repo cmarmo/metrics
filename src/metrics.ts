@@ -1,7 +1,8 @@
 import { Event as JupyterEvent } from '@jupyterlab/services';
-import { Token } from '@lumino/coreutils';
+import { JSONObject, Token } from '@lumino/coreutils';
 import { CommandExecuted as CE_IMPORT } from './emissions/command-executed';
 import { CurrentChanged as CC_IMPORT } from './emissions/current-changed';
+import { JupyterError as JP_IMPORT } from './emissions/jupyter-error';
 import { RuntimeError as RE_IMPORT } from './emissions/runtime-error';
 
 /**
@@ -44,7 +45,7 @@ export namespace IMetrics {
    */
   export type Event<
     T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
-  > = {
+  > = JSONObject & {
     /**
      * Whether the metrics data is anonymous and how sensitive it is.
      */
@@ -67,6 +68,7 @@ export namespace IMetrics {
   export namespace Event {
     export import CommandExecuted = CE_IMPORT;
     export import CurrentChanged = CC_IMPORT;
+    export import JupyterError = JP_IMPORT;
     export import RuntimeError = RE_IMPORT;
   }
 }

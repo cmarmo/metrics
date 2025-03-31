@@ -1,0 +1,45 @@
+$id: https://schema.notebook.link/metrics/jupyter-error/v1
+version: "1"
+title: Jupyter error output metrics emission
+description: |
+  a Jupyter error output event metrics emission
+type: object
+properties:
+  level:
+    type: object
+    properties:
+      sensitivity:
+        type: string
+        enum:
+          - high
+          - moderate
+          - low
+        default: high
+      anonymous:
+        type: boolean
+        default: false
+  metrics:
+    type: object
+    properties:
+      ename:
+        type: string
+      evalue:
+        type: string
+      output_type:
+        type: string
+        const: "error"
+      traceback:
+        type: array
+        items:
+          type: string
+    required:
+      - ename
+      - evalue
+      - output_type
+      - traceback
+  timestamp:
+    type: string
+required:
+  - level
+  - metrics
+  - timestamp
