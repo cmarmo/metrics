@@ -1,9 +1,9 @@
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Event as JupyterEvent } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { DisposableDelegate, DisposableSet } from '@lumino/disposable';
 import { IMetrics } from './metrics';
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
   id: IMetrics.COLLECTOR,
@@ -19,7 +19,7 @@ const emitter: JupyterFrontEndPlugin<void> = {
   requires: [IMetrics.ICollector, IRenderMimeRegistry, ISettingRegistry],
   ...((set: DisposableSet | null = null) => ({
     activate: (
-      { commands, restored, serviceManager: { events }, shell },
+      { commands, serviceManager: { events }, shell },
       collector: IMetrics.ICollector,
       rendermimes: IRenderMimeRegistry,
       registry: ISettingRegistry

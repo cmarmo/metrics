@@ -63,18 +63,15 @@ export namespace JupyterError {
     emitter: IMetrics.IEmitter,
     rendermimes: IRenderMimeRegistry
   ): IDisposable {
-    const factory = rendermimes.getFactory(MIME_STDERR)!;
+    const original = rendermimes.getFactory(MIME_STDERR)!;
     let disposed = false;
     rendermimes.addFactory({
-      safe: true,
-      mimeTypes: [MIME_STDERR],
+      ...original,
       defaultRank: 10,
       createRenderer: options => {
-        const renderer = factory.createRenderer(options);
-        const render = renderer.renderModel;
-        (renderer as unknown as IRenderMime.IRenderer).renderModel = (
-          model: IRenderMime.IMimeModel
-        ) => {
+        const renderer = original.createRenderer(options);
+        const { renderModel } = renderer;
+        (renderer as unknown as IRenderMime.IRenderer).renderModel = model => {
           if (!disposed && model.data[MIME_ERROR]) {
             const data: IMetrics.Event<JupyterError> = {
               level: { anonymous: false, sensitivity: 'high' },
@@ -83,7 +80,7 @@ export namespace JupyterError {
             };
             void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
           }
-          return render.call(renderer, model);
+          return renderModel.call(renderer, model);
         };
         return renderer;
       }
