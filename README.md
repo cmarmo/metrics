@@ -8,11 +8,12 @@ This package contains three Jupyter extensions.
 
 ### Jupyter server extension
 
-This extension, `notebook_link_metrics`, which register's event schemas for three types of metrics events:
+This extension, `notebook_link_metrics`, which register's event schemas for four types of metrics events:
 
 1. `CommandExecuted` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time the command registry executes a command
 2. `CurrentChanged` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a non-`null` new value is emitted by the application shell's `currentChanged` signal
-3. `RuntimeError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time an `error` or `unhandledpromiserejection` listener on the application `window` is invoked
+3. `JupyterError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a MIME bundle that contains a `application/vnd.jupyter.error` value is rendered
+4. `RuntimeError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time an `error` or `unhandledpromiserejection` listener on the application `window` is invoked
 
 ### JupyterLab/JupyterLite emitter extension
 

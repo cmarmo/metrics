@@ -3028,8 +3028,13 @@ __metadata:
   dependencies:
     "@jupyterlab/application": ^4.0.0
     "@jupyterlab/builder": ^4.0.0
+    "@jupyterlab/rendermime": ^4.3.6
     "@jupyterlab/settingregistry": ^4.3.6
     "@jupyterlab/testutils": ^4.0.0
+    "@lumino/commands": ^2.3.1
+    "@lumino/coreutils": ^2.2.0
+    "@lumino/disposable": ^2.1.3
+    "@lumino/widgets": ^2.6.0
     "@types/jest": ^29.2.0
     "@types/json-schema": ^7.0.11
     "@types/react": ^18.0.26

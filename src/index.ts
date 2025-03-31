@@ -1,4 +1,5 @@
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Event as JupyterEvent } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { DisposableDelegate, DisposableSet } from '@lumino/disposable';
@@ -15,22 +16,27 @@ const emitter: JupyterFrontEndPlugin<void> = {
   id: IMetrics.EMITTER,
   description: 'An extension that emits and collects metrics',
   autoStart: true,
-  requires: [IMetrics.ICollector, ISettingRegistry],
+  requires: [IMetrics.ICollector, IRenderMimeRegistry, ISettingRegistry],
   ...((set: DisposableSet | null = null) => ({
     activate: (
-      { commands, restored, serviceManager: { events }, shell },
+      { commands, serviceManager: { events }, shell },
       collector: IMetrics.ICollector,
+      rendermimes: IRenderMimeRegistry,
       registry: ISettingRegistry
     ) => {
-      void restored.then(async () => {
-        const settings = await registry.load(IMetrics.EMITTER);
+      (async () => {
+        const emitter: IMetrics.IEmitter = {
+          emit: event => events.emit(event).catch(() => undefined)
+        };
+        const settings = registry.load(IMetrics.EMITTER);
         set = DisposableSet.from([
-          Private.dispatch(events.stream, collector, settings),
-          IMetrics.Event.CommandExecuted.broadcast(events, commands),
-          IMetrics.Event.CurrentChanged.broadcast(events, shell),
-          IMetrics.Event.RuntimeError.broadcast(events)
+          IMetrics.Event.CommandExecuted.broadcast(emitter, commands),
+          IMetrics.Event.CurrentChanged.broadcast(emitter, shell),
+          IMetrics.Event.JupyterError.broadcast(emitter, rendermimes),
+          IMetrics.Event.RuntimeError.broadcast(emitter),
+          Private.dispatch(events.stream, collector, await settings)
         ]);
-      });
+      })();
     },
     deactivate: () => set?.dispose()
   }))()
@@ -72,6 +78,7 @@ namespace Private {
         switch (schema_id) {
           case IMetrics.Event.CommandExecuted.SCHEMA:
           case IMetrics.Event.CurrentChanged.SCHEMA:
+          case IMetrics.Event.JupyterError.SCHEMA:
           case IMetrics.Event.RuntimeError.SCHEMA:
             if (allowed(event as unknown as Event)) {
               void collector.collect(schema_id, event as unknown as Event);
