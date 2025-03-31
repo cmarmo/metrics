@@ -25,12 +25,15 @@ const emitter: JupyterFrontEndPlugin<void> = {
       registry: ISettingRegistry
     ) => {
       (async () => {
+        const emitter: IMetrics.IEmitter = {
+          emit: event => events.emit(event).catch(() => undefined)
+        };
         const settings = registry.load(IMetrics.EMITTER);
         set = DisposableSet.from([
-          IMetrics.Event.CommandExecuted.broadcast(events, commands),
-          IMetrics.Event.CurrentChanged.broadcast(events, shell),
-          IMetrics.Event.JupyterError.broadcast(events, rendermimes),
-          IMetrics.Event.RuntimeError.broadcast(events),
+          IMetrics.Event.CommandExecuted.broadcast(emitter, commands),
+          IMetrics.Event.CurrentChanged.broadcast(emitter, shell),
+          IMetrics.Event.JupyterError.broadcast(emitter, rendermimes),
+          IMetrics.Event.RuntimeError.broadcast(emitter),
           Private.dispatch(events.stream, collector, await settings)
         ]);
       })();
