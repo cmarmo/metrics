@@ -49,7 +49,7 @@ export namespace IMetrics {
     /**
      * Whether the metrics data is anonymous and how sensitive it is.
      */
-    level: { anonymous: boolean; sensitivity: 'high' | 'moderate' | 'low' };
+    level: { anonymous: boolean; sensitivity: Event.Sensitivity };
 
     /**
      * The metrics payload.
@@ -66,9 +66,17 @@ export namespace IMetrics {
    * The metrics event namespace.
    */
   export namespace Event {
+    export type Sensitivity = 'high' | 'moderate' | 'low';
     export import CommandExecuted = CE_IMPORT;
     export import CurrentChanged = CC_IMPORT;
     export import JupyterError = JP_IMPORT;
     export import RuntimeError = RE_IMPORT;
   }
+
+  /**
+   * A filter to apply to all metrics emissions.
+   */
+  export type Filter = Event['level'] & {
+    disabled: boolean;
+  };
 }

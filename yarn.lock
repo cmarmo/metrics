@@ -3028,6 +3028,7 @@ __metadata:
   dependencies:
     "@jupyterlab/application": ^4.0.0
     "@jupyterlab/builder": ^4.0.0
+    "@jupyterlab/coreutils": ^6.3.6
     "@jupyterlab/rendermime": ^4.3.6
     "@jupyterlab/settingregistry": ^4.3.6
     "@jupyterlab/testutils": ^4.0.0

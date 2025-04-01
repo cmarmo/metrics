@@ -1,3 +1,4 @@
+from jupyterlab_server.config import get_page_config
 import pathlib
 import warnings
 
@@ -28,6 +29,8 @@ def _jupyter_server_extension_points():
 
 def _load_jupyter_server_extension(app):
     app.log.info(f"{py_package} {__version__} registering event schemas")
+    page_config = app.web_app.settings.get('page_config_data')
+    page_config[py_package] = '{"foo": false}'
     event_logger = app.event_logger
     root = pathlib.Path(__file__).parent
     for schema in schemas:

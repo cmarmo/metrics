@@ -1,16 +1,24 @@
 {
   "jupyter.lab.shortcuts": [],
-  "title": "@notebook-link/metrics",
-  "description": "@notebook-link/metrics settings.",
+  "title": "notebook.link metrics",
+  "description": "notebook.link metrics settings – ignored if page config is set to override",
   "type": "object",
   "properties": {
+    "disabled": {
+      "title": "Emit nothing",
+      "description": "Ignored if page config overrides are present",
+      "default": true,
+      "type": "boolean"
+    },
     "anonymous": {
       "title": "Anonymous data emissions only",
+      "description": "Ignored if page config overrides are present or if emissions are disabled",
       "default": true,
       "type": "boolean"
     },
     "sensitivity": {
       "title": "Sensitivity level of emissions",
+      "description": "Ignored if page config overrides are present or if emissions are disabled",
       "enum": ["high", "moderate", "low"],
       "default": "low"
     }
