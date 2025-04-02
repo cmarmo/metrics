@@ -44,6 +44,19 @@ const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
 };
 ```
 
+### Configuration
+
+```yml
+anonymous: false
+disabled: false
+excluded:
+  command-executed: false
+  current-changed: false
+  jupyter-error: false
+  runtime-error: false
+sensitivity: high
+```
+
 ## Requirements
 
 - JupyterLab >= 4.0.0

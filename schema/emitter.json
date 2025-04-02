@@ -22,7 +22,7 @@
       "enum": ["high", "moderate", "low"],
       "default": "low"
     },
-    "exclude": {
+    "excluded": {
       "title": "Excluded emissions",
       "description": "Ignored if page config overrides are present or if emissions are disabled",
       "type": "object",
