@@ -21,6 +21,18 @@
       "description": "Ignored if page config overrides are present or if emissions are disabled",
       "enum": ["high", "moderate", "low"],
       "default": "low"
+    },
+    "exclude": {
+      "title": "Excluded emissions",
+      "description": "Ignored if page config overrides are present or if emissions are disabled",
+      "type": "object",
+      "properties": {
+        "command-executed": { "type": "boolean", "default": false },
+        "current-changed": { "type": "boolean", "default": false },
+        "jupyter-error": { "type": "boolean", "default": false },
+        "runtime-error": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
