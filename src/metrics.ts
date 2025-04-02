@@ -67,6 +67,15 @@ export namespace IMetrics {
    */
   export namespace Event {
     export type Sensitivity = 'high' | 'moderate' | 'low';
+
+    export type Type =
+      | 'command-executed'
+      | 'current-changed'
+      | 'jupyter-error'
+      | 'runtime-error';
+
+    export const type = (url: string) => url.split('/').reverse()[1] as Type;
+
     export import CommandExecuted = CE_IMPORT;
     export import CurrentChanged = CC_IMPORT;
     export import JupyterError = JP_IMPORT;
@@ -78,5 +87,6 @@ export namespace IMetrics {
    */
   export type Filter = Event['level'] & {
     disabled: boolean;
+    excluded: { [key in Event.Type]: boolean };
   };
 }

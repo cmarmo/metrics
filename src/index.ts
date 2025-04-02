@@ -55,9 +55,22 @@ namespace Private {
 
   type Settings = ISettingRegistry.ISettings;
 
-  const allowed = (filter: Filter, { level }: Event) => {
-    const { anonymous, sensitivity } = level;
-    const enabled = !filter.disabled;
+  const DEFAULT_FILTER: Filter = {
+    anonymous: true,
+    disabled: false,
+    sensitivity: 'low',
+    excluded: {
+      'command-executed': false,
+      'current-changed': false,
+      'jupyter-error': false,
+      'runtime-error': false
+    }
+  };
+
+  const allowed = (filter: Filter, event: JupyterEvent.Emission) => {
+    const type = IMetrics.Event.type(event.schema_id);
+    const { anonymous, sensitivity } = (event as unknown as Event).level;
+    const enabled = !filter.disabled && !filter.excluded[type];
     const value = { low: 1, moderate: 2, high: 3 };
     const safe = value[sensitivity] <= value[filter.sensitivity];
     const discreet = anonymous || !filter.anonymous;
@@ -76,7 +89,7 @@ namespace Private {
         case IMetrics.Event.CurrentChanged.SCHEMA:
         case IMetrics.Event.JupyterError.SCHEMA:
         case IMetrics.Event.RuntimeError.SCHEMA:
-          if (allowed(filter, event as unknown as Event)) {
+          if (allowed(filter, event)) {
             void collector.collect(schema_id, event as unknown as Event);
           }
           break;
@@ -101,9 +114,9 @@ namespace Private {
   export function dispatch(
     stream: JupyterEvent.Stream,
     collector: IMetrics.ICollector,
-    settings: Settings,
-    filter: Filter = { anonymous: true, disabled: false, sensitivity: 'low' }
+    settings: Settings
   ) {
+    const filter = structuredClone(DEFAULT_FILTER);
     const handler = (settings: Settings) => update(settings, filter);
     update(settings, filter);
     settings.changed.connect(handler);
