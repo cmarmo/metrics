@@ -35,11 +35,11 @@ def _load_jupyter_server_extension(app):
     root = Path(__file__).parent
     for schema in schemas:
         event_logger.register_event_schema(root / "emissions" / f"{schema}.yml")
-    page_config = app.web_app.settings.get("page_config_data")
     override_path = environ.get(f"{py_package.upper()}_PAGE_CONFIG")
     if override_path:
         try:
             with Path.open(override_path) as override_file:
+              page_config = app.web_app.settings.get("page_config_data")
               page_config[py_package] = json.dumps(yaml.loads(override_file))
         except:
             app.log.warning(f"{py_package} failed to load: {override_path}")

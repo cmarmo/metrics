@@ -77,6 +77,14 @@ namespace Private {
     return enabled && safe && discreet;
   };
 
+  const override = (): Partial<Filter> => {
+    try {
+      return JSON.parse(PageConfig.getOption('notebook_link_metrics') || '{}');
+    } catch (error) {
+      return {};
+    }
+  };
+
   const proxy = async (
     stream: JupyterEvent.Stream,
     collector: IMetrics.ICollector,
@@ -99,13 +107,11 @@ namespace Private {
     }
   };
 
-  const update = (settings: Settings, filter: Filter) => {
+  const update = (filter: Filter, settings: Settings) => {
     const anonymous = settings.get('anonymous').composite as boolean;
     const disabled = settings.get('disabled').composite as boolean;
     const sensitivity = settings.get('sensitivity').composite as Sensitivity;
-    const raw = PageConfig.getOption('notebook_link_metrics');
-    console.log('raw', raw);
-    const config: Partial<Filter> = JSON.parse(raw || '{}');
+    const config: Partial<Filter> = override();
     filter.anonymous = config.anonymous ?? anonymous;
     filter.disabled = config.disabled ?? disabled;
     filter.sensitivity = config.sensitivity ?? sensitivity;
@@ -117,8 +123,8 @@ namespace Private {
     settings: Settings
   ) {
     const filter = structuredClone(DEFAULT_FILTER);
-    const handler = (settings: Settings) => update(settings, filter);
-    update(settings, filter);
+    const handler = (settings: Settings) => update(filter, settings);
+    update(filter, settings);
     settings.changed.connect(handler);
     void proxy(stream, collector, filter);
     return new DisposableDelegate(() => {
