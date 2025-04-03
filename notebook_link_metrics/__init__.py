@@ -1,7 +1,7 @@
-from os import environ
-from jupyter_events import yaml
-from pathlib import Path
 import json
+from jupyter_events import yaml
+from os import environ
+from pathlib import Path
 import warnings
 
 js_package = "@notebook-link/metrics"
@@ -31,11 +31,10 @@ def _jupyter_server_extension_points():
 
 def _load_jupyter_server_extension(app):
     app.log.info(f"{py_package} {__version__} registering event schemas")
-    event_logger = app.event_logger
-    root = Path(__file__).parent
     for schema in schemas:
-        event_logger.register_event_schema(root / "emissions" / f"{schema}.yml")
-    override_path = environ.get(f"{py_package.upper()}_PAGE_CONFIG")
+        schema_path = Path(__file__).parent / "emissions" / f"{schema}.yml"
+        app.event_logger.register_event_schema(schema_path)
+    override_path = environ.get(f"{py_package.upper()}_OVERRIDE")
     if override_path:
         try:
             with Path.open(override_path) as override_file:

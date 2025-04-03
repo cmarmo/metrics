@@ -46,6 +46,21 @@ const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
 
 ### Configuration
 
+This plugin can be configured in two ways to allow a user to disable or limit
+emissions: the JupyterLab user settings system or using the JupyterLab
+`PageConfig` object.
+
+There are several ways to populate `PageConfig`, (which is an object literal
+loaded in the HTML page that hosts JupyterLab). As a convenience for JupyterLab
+deployment, this package supports setting a path to a YAML file as an
+environment variable, `NOTEBOOK_LINK_METRICS_OVERRIDE`.
+
+The contents of an override file are the same keys that exist in the user
+settings (`emitter.json`) and **if set, they always take precedence over user
+settings**.
+
+Here is an example override file for the most permissive emission settings:
+
 ```yml
 anonymous: false
 disabled: false
