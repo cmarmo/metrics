@@ -8,7 +8,7 @@ This package contains three Jupyter extensions.
 
 ### Jupyter server extension
 
-This extension, `notebook_link_metrics`, which register's event schemas for four types of metrics events:
+The Jupyter server extension, `notebook_link_metrics` registers event schemas for four types of metrics events:
 
 1. `CommandExecuted` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time the command registry executes a command
 2. `CurrentChanged` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a non-`null` new value is emitted by the application shell's `currentChanged` signal
@@ -17,11 +17,11 @@ This extension, `notebook_link_metrics`, which register's event schemas for four
 
 ### JupyterLab/JupyterLite emitter extension
 
-This extension emits the events registered by the server extension (in JupyterLite, these events are emitted without a server validating them, in JupyterLab, the schemas registered by the server extension are used for validation of emissions).
+The front-end emitter extension emits the events registered by the server extension (in JupyterLite, these events are emitted without a server validating them; in JupyterLab, the schemas registered by the server extension are used for validation of emissions).
 
 ### JupyterLab/JupyterLite collector extension
 
-This is an extension that collects metrics emissions. The default implementation is a no-op and in production, the extension `@notebook-link/metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the emitter extension to use. The `interface` for a collector is minimal:
+The collector extension is the client that receives metrics emissions. The default implementation is a no-op and in production, the extension `@notebook-link/metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the emitter extension to use. The `interface` for a collector is minimal:
 
 ```ts
 interface ICollector {
