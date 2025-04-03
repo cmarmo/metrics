@@ -49,7 +49,7 @@ export default [collector, emitter];
 namespace Private {
   type Event = IMetrics.Event;
 
-  type Filter = IMetrics.Filter;
+  type Filter = IMetrics.Filter & { disposed: boolean };
 
   type Sensitivity = IMetrics.Event.Sensitivity;
 
@@ -58,6 +58,7 @@ namespace Private {
   const DEFAULT_FILTER: Filter = {
     anonymous: true,
     disabled: false,
+    disposed: false,
     sensitivity: 'low',
     excluded: {
       'command-executed': false,
@@ -77,20 +78,15 @@ namespace Private {
     return enabled && safe && discreet;
   };
 
-  const override = (): Partial<Filter> => {
-    try {
-      return JSON.parse(PageConfig.getOption('notebook_link_metrics') || '{}');
-    } catch (error) {
-      return {};
-    }
-  };
-
   const proxy = async (
     stream: JupyterEvent.Stream,
     collector: IMetrics.ICollector,
     filter: Filter
   ) => {
     for await (const event of stream) {
+      if (filter.disposed) {
+        return;
+      }
       const { schema_id } = event;
       switch (schema_id) {
         case IMetrics.Event.CommandExecuted.SCHEMA:
@@ -107,14 +103,17 @@ namespace Private {
     }
   };
 
-  const update = (filter: Filter, settings: Settings) => {
+  const update = (
+    filter: Filter,
+    settings: Settings,
+    override: Partial<Filter>
+  ) => {
     const anonymous = settings.get('anonymous').composite as boolean;
     const disabled = settings.get('disabled').composite as boolean;
     const sensitivity = settings.get('sensitivity').composite as Sensitivity;
-    const config: Partial<Filter> = override();
-    filter.anonymous = config.anonymous ?? anonymous;
-    filter.disabled = config.disabled ?? disabled;
-    filter.sensitivity = config.sensitivity ?? sensitivity;
+    filter.anonymous = override.anonymous ?? anonymous;
+    filter.disabled = override.disabled ?? disabled;
+    filter.sensitivity = override.sensitivity ?? sensitivity;
   };
 
   export function dispatch(
@@ -123,12 +122,18 @@ namespace Private {
     settings: Settings
   ) {
     const filter = structuredClone(DEFAULT_FILTER);
-    const handler = (settings: Settings) => update(filter, settings);
-    update(filter, settings);
+    let defaults: Partial<Filter> = {};
+    try {
+      defaults = JSON.parse(PageConfig.getOption('notebook_link_metrics'));
+    } catch (_) {
+      defaults = {};
+    }
+    update(filter, settings, defaults);
+    const handler = (settings: Settings) => update(filter, settings, defaults);
     settings.changed.connect(handler);
     void proxy(stream, collector, filter);
     return new DisposableDelegate(() => {
-      filter.disabled = true;
+      filter.disposed = true;
       settings.changed.disconnect(handler);
     });
   }
