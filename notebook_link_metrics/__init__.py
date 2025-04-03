@@ -1,34 +1,44 @@
-import pathlib
+import json
+from jupyter_events import yaml
+from os import environ
+from pathlib import Path
+import warnings
 
+js_package = "@notebook-link/metrics"
+py_package = "notebook_link_metrics"
+schemas = [
+    "command-executed",
+    "current-changed",
+    "jupyter-error",
+    "runtime-error"
+]
+
+# Fallback when using the package in dev mode without installing in editable
+# mode with pip. It is highly recommended to install the package from a stable
+# release or in editable mode:
+# https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs
 try:
     from ._version import __version__
 except ImportError:
-    # Fallback when using the package in dev mode without installing
-    # in editable mode with pip. It is highly recommended to install
-    # the package from a stable release or in editable mode: https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs
-    import warnings
-    warnings.warn("Importing 'notebook_link_metrics' outside a proper installation.")
+    warnings.warn(f"Importing '{py_package}' outside a proper installation.")
     __version__ = "dev"
 
-
 def _jupyter_labextension_paths():
-    return [{
-        "src": "labextension",
-        "dest": "@notebook-link/metrics"
-    }]
-
+    return [{ "src": "labextension", "dest": js_package }]
 
 def _jupyter_server_extension_points():
-    return [{
-        "module": "notebook_link_metrics"
-    }]
-
+    return [{ "module": py_package }]
 
 def _load_jupyter_server_extension(app):
-    name = "notebook_link_metrics"
-    parent = pathlib.Path(__file__).parent
-    app.event_logger.register_event_schema(parent / "emissions" / "command-executed.yml")
-    app.event_logger.register_event_schema(parent / "emissions" / "current-changed.yml")
-    app.event_logger.register_event_schema(parent / "emissions" / "jupyter-error.yml")
-    app.event_logger.register_event_schema(parent / "emissions" / "runtime-error.yml")
-    app.log.info(f"Registered {name} server extension")
+    app.log.info(f"{py_package} {__version__} registering event schemas")
+    for schema in schemas:
+        schema_path = Path(__file__).parent / "emissions" / f"{schema}.yml"
+        app.event_logger.register_event_schema(schema_path)
+    override_path = environ.get(f"{py_package.upper()}_OVERRIDE")
+    if override_path:
+        try:
+            with Path.open(override_path) as override_file:
+              page_config = app.web_app.settings.get("page_config_data")
+              page_config[py_package] = json.dumps(yaml.loads(override_file))
+        except:
+            app.log.warning(f"{py_package} failed to load: {override_path}")

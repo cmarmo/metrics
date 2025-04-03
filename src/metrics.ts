@@ -47,9 +47,9 @@ export namespace IMetrics {
     T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
   > = {
     /**
-     * Whether the metrics data is anonymous and how sensitive it is.
+     * The sensitivity / anonymity level of an event.
      */
-    level: { anonymous: boolean; sensitivity: 'high' | 'moderate' | 'low' };
+    level: Event.Level;
 
     /**
      * The metrics payload.
@@ -66,9 +66,43 @@ export namespace IMetrics {
    * The metrics event namespace.
    */
   export namespace Event {
+    /**
+     * Whether the metrics data is anonymous and how sensitive it is.
+     */
+    export type Level = { anonymous: boolean; sensitivity: Sensitivity };
+
+    /**
+     * Event metrics data sensitivity.
+     */
+    export type Sensitivity = 'high' | 'moderate' | 'low';
+
+    /**
+     * Metrics emission type.
+     */
+    export type Type =
+      | 'command-executed'
+      | 'current-changed'
+      | 'jupyter-error'
+      | 'runtime-error';
+
+    /**
+     * A utility function that returns the event type of a known schema URL.
+     * @param url - The schema ID of an emission
+     * @returns the event type.
+     */
+    export const type = (url: string) => url.split('/').reverse()[1] as Type;
+
     export import CommandExecuted = CE_IMPORT;
     export import CurrentChanged = CC_IMPORT;
     export import JupyterError = JP_IMPORT;
     export import RuntimeError = RE_IMPORT;
   }
+
+  /**
+   * A filter to apply to all metrics emissions.
+   */
+  export type Filter = Event.Level & {
+    disabled: boolean;
+    excluded: { [key in Event.Type]: boolean };
+  };
 }
