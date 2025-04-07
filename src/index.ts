@@ -3,6 +3,7 @@ import { PageConfig } from '@jupyterlab/coreutils';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Event as JupyterEvent } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { PromiseDelegate } from '@lumino/coreutils';
 import { DisposableDelegate, DisposableSet } from '@lumino/disposable';
 import { IMetrics } from './metrics';
 
@@ -18,29 +19,28 @@ const emitter: JupyterFrontEndPlugin<void> = {
   description: 'An extension that emits and collects metrics',
   autoStart: true,
   requires: [IMetrics.ICollector, IRenderMimeRegistry, ISettingRegistry],
-  ...((set: DisposableSet | null = null) => ({
+  ...((set: PromiseDelegate<DisposableSet>) => ({
     activate: (
       { commands, serviceManager: { events }, shell },
       collector: IMetrics.ICollector,
       rendermimes: IRenderMimeRegistry,
       registry: ISettingRegistry
     ) => {
-      (async () => {
-        const emitter: IMetrics.IEmitter = {
-          emit: event => events.emit(event).catch(() => undefined)
-        };
-        const settings = registry.load(IMetrics.EMITTER);
-        set = DisposableSet.from([
-          IMetrics.Event.CommandExecuted.broadcast(emitter, commands),
-          IMetrics.Event.CurrentChanged.broadcast(emitter, shell),
-          IMetrics.Event.JupyterError.broadcast(emitter, rendermimes),
-          IMetrics.Event.RuntimeError.broadcast(emitter),
-          Private.dispatch(events.stream, collector, await settings)
-        ]);
-      })();
+      void (async (emitter: IMetrics.IEmitter) => {
+        const settings = await registry.load(IMetrics.EMITTER);
+        set.resolve(
+          DisposableSet.from([
+            IMetrics.Event.CommandExecuted.broadcast(emitter, commands),
+            IMetrics.Event.CurrentChanged.broadcast(emitter, shell),
+            IMetrics.Event.JupyterError.broadcast(emitter, rendermimes),
+            IMetrics.Event.RuntimeError.broadcast(emitter),
+            Private.dispatch(events.stream, collector, settings)
+          ])
+        );
+      })({ emit: event => events.emit(event).catch(() => undefined) });
     },
-    deactivate: () => set?.dispose()
-  }))()
+    deactivate: async () => (await set.promise).dispose()
+  }))(new PromiseDelegate())
 };
 
 export * from './metrics';
