@@ -25,7 +25,7 @@ export namespace RuntimeError {
    * @param emitter - An event emitter, e.g. JupyterLab's event manager.
    * @returns a disposable that stops broadcasting when disposed.
    */
-  export function broadcast(emitter: IMetrics.IEmitter): IDisposable {
+  export function broadcast(emitter: IMetrics.Event.Emitter): IDisposable {
     const errorHandler = (error: ErrorEvent) => {
       const data: IMetrics.Event<RuntimeError> = {
         level: { anonymous: false, sensitivity: 'high' },

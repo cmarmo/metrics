@@ -4,47 +4,82 @@ import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Event as JupyterEvent } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { PromiseDelegate } from '@lumino/coreutils';
-import { DisposableDelegate, DisposableSet } from '@lumino/disposable';
+import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { IMetrics } from './metrics';
 
 const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
   id: IMetrics.COLLECTOR,
   description: 'A no-op collector for metrics emissions',
   provides: IMetrics.ICollector,
-  activate: (): IMetrics.ICollector => ({ collect: async () => undefined })
+  activate: () => ({ collect: async (a, b) => console.log(a, b) })
 };
 
-const emitter: JupyterFrontEndPlugin<void> = {
+const broadcasts: JupyterFrontEndPlugin<void> = {
+  id: '@notebook-link/metrics:broadcasts',
+  description: 'An extension that broadcasts default metrics',
+  requires: [IMetrics.IEmitter, IRenderMimeRegistry, ISettingRegistry],
+  activate: (
+    { commands, shell },
+    emitter: IMetrics.IEmitter,
+    rendermimes: IRenderMimeRegistry
+  ) => {
+    emitter.register(IMetrics.Event.CommandExecuted.SCHEMA, emitter =>
+      IMetrics.Event.CommandExecuted.broadcast(emitter, commands)
+    );
+    emitter.register(IMetrics.Event.CurrentChanged.SCHEMA, emitter =>
+      IMetrics.Event.CurrentChanged.broadcast(emitter, shell)
+    );
+    emitter.register(IMetrics.Event.JupyterError.SCHEMA, emitter =>
+      IMetrics.Event.JupyterError.broadcast(emitter, rendermimes)
+    );
+    emitter.register(IMetrics.Event.RuntimeError.SCHEMA, emitter =>
+      IMetrics.Event.RuntimeError.broadcast(emitter)
+    );
+  },
+  autoStart: true
+};
+
+const emitter: JupyterFrontEndPlugin<IMetrics.IEmitter> = {
   id: IMetrics.EMITTER,
   description: 'An extension that emits and collects metrics',
   autoStart: true,
-  requires: [IMetrics.ICollector, IRenderMimeRegistry, ISettingRegistry],
-  ...((set: PromiseDelegate<DisposableSet>) => ({
-    activate: (
-      { commands, serviceManager: { events }, shell },
+  requires: [IMetrics.ICollector, ISettingRegistry],
+  provides: IMetrics.IEmitter,
+  ...((metrics: PromiseDelegate<IDisposable>) => ({
+    activate: async (
+      { serviceManager: { events } },
       collector: IMetrics.ICollector,
-      rendermimes: IRenderMimeRegistry,
       registry: ISettingRegistry
     ) => {
-      void (async (emitter: IMetrics.IEmitter) => {
-        const settings = await registry.load(IMetrics.EMITTER);
-        set.resolve(
-          DisposableSet.from([
-            IMetrics.Event.CommandExecuted.broadcast(emitter, commands),
-            IMetrics.Event.CurrentChanged.broadcast(emitter, shell),
-            IMetrics.Event.JupyterError.broadcast(emitter, rendermimes),
-            IMetrics.Event.RuntimeError.broadcast(emitter),
-            Private.dispatch(events.stream, collector, settings)
-          ])
-        );
-      })({ emit: event => events.emit(event).catch(() => undefined) });
+      const settings = await registry.load(IMetrics.EMITTER);
+      const dispatcher = Private.dispatch(events.stream, collector, settings);
+      const delegate = new DisposableDelegate(() => {
+        dispatcher.dispose();
+        for (const schema in schemas) {
+          schemas[schema].dispose();
+        }
+      });
+      const emitter: IMetrics.Event.Emitter = {
+        emit: event => events.emit(event).catch(() => undefined)
+      };
+      const schemas: { [url: string]: IDisposable } = {};
+      const register = (
+        schema: string,
+        broadcast: (emitter: IMetrics.Event.Emitter) => IDisposable
+      ) => {
+        if (!delegate.isDisposed && !(schema in schemas)) {
+          schemas[schema] = broadcast(emitter);
+        }
+      };
+      metrics.resolve(delegate);
+      return { register };
     },
-    deactivate: async () => (await set.promise).dispose()
+    deactivate: async () => (await metrics.promise).dispose()
   }))(new PromiseDelegate())
 };
 
 export * from './metrics';
-export default [collector, emitter];
+export default [broadcasts, collector, emitter];
 
 namespace Private {
   type Event = IMetrics.Event;

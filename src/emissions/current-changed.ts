@@ -29,7 +29,7 @@ export namespace CurrentChanged {
    * @returns a disposable that stops broadcasting when disposed.
    */
   export function broadcast(
-    emitter: IMetrics.IEmitter,
+    emitter: IMetrics.Event.Emitter,
     shell: JupyterFrontEnd.IShell
   ): IDisposable {
     const handler = (

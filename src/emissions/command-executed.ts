@@ -35,7 +35,7 @@ export namespace CommandExecuted {
    * @returns a disposable that stops broadcasting when disposed.
    */
   export function broadcast(
-    emitter: IMetrics.IEmitter,
+    emitter: IMetrics.Event.Emitter,
     commands: CommandRegistry
   ): IDisposable {
     const handler = (

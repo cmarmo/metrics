@@ -64,7 +64,7 @@ export namespace JupyterError {
    * nothing.
    */
   export function broadcast(
-    emitter: IMetrics.IEmitter,
+    emitter: IMetrics.Event.Emitter,
     rendermimes: IRenderMimeRegistry
   ): IDisposable {
     const original = rendermimes.getFactory(MIME_STDERR)!;

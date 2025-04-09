@@ -1,5 +1,6 @@
 import { Event as JupyterEvent } from '@jupyterlab/services';
 import { Token } from '@lumino/coreutils';
+import { IDisposable } from '@lumino/disposable';
 import { CommandExecuted as CE_IMPORT } from './emissions/command-executed';
 import { CurrentChanged as CC_IMPORT } from './emissions/current-changed';
 import { JupyterError as JP_IMPORT } from './emissions/jupyter-error';
@@ -25,18 +26,30 @@ export namespace IMetrics {
   export const ICollector = new Token<ICollector>(COLLECTOR);
 
   /**
-   * The public API of a collector plugin.
+   * Token for the emitter plugin.
+   */
+  export const IEmitter = new Token<IEmitter>(EMITTER);
+
+  /**
+   * The API of a collector plugin.
    */
   export interface ICollector {
     collect: (schema: string, event: Event) => Promise<void>;
   }
 
   /**
-   * A minimal emitter of metrics events,
-   * (compatible with e.g., Event.IManager from @jupyterlab/services).
+   * The API of the emitter plugin.
    */
   export interface IEmitter {
-    emit(event: JupyterEvent.Request): Promise<void>;
+    /**
+     * Registers a broadcast source that emits metrics events.
+     * @param schema - The event schema URL.
+     * @param broadcast - An event broadcaster, returns a clean up disposable.
+     */
+    register: (
+      schema: string,
+      broadcast: (emitter: Event.Emitter) => IDisposable
+    ) => void;
   }
 
   /**
@@ -66,6 +79,12 @@ export namespace IMetrics {
    * The metrics event namespace.
    */
   export namespace Event {
+    /**
+     * A minimal emitter of metrics events,
+     * (compatible with e.g., Event.IManager from @jupyterlab/services).
+     */
+    export type Emitter = { emit(event: JupyterEvent.Request): Promise<void> };
+
     /**
      * Whether the metrics data is anonymous and how sensitive it is.
      */
