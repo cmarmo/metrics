@@ -34,7 +34,7 @@ export namespace IMetrics {
    * The API of a collector plugin.
    */
   export interface ICollector {
-    collect: (schema: string, event: Event) => Promise<void>;
+    collect: (schema: string, event: Event<any>) => Promise<void>;
   }
 
   /**
@@ -56,9 +56,7 @@ export namespace IMetrics {
    * A generic metrics event.
    * @typeparam T - The type of the metrics payload of the event.
    */
-  export type Event<
-    T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
-  > = {
+  export type Event<T> = {
     /**
      * The sensitivity / anonymity level of an event.
      */
@@ -95,22 +93,6 @@ export namespace IMetrics {
      */
     export type Sensitivity = 'high' | 'moderate' | 'low';
 
-    /**
-     * Metrics emission type.
-     */
-    export type Type =
-      | 'command-executed'
-      | 'current-changed'
-      | 'jupyter-error'
-      | 'runtime-error';
-
-    /**
-     * A utility function that returns the event type of a known schema URL.
-     * @param url - The schema ID of an emission
-     * @returns the event type.
-     */
-    export const type = (url: string) => url.split('/').reverse()[1] as Type;
-
     export import CommandExecuted = CE_IMPORT;
     export import CurrentChanged = CC_IMPORT;
     export import JupyterError = JP_IMPORT;
@@ -122,6 +104,6 @@ export namespace IMetrics {
    */
   export type Filter = Event.Level & {
     disabled: boolean;
-    excluded: { [key in Event.Type]: boolean };
+    excluded: { [schema: string]: boolean };
   };
 }

@@ -45,36 +45,37 @@ const emitter: JupyterFrontEndPlugin<IMetrics.IEmitter> = {
   autoStart: true,
   requires: [IMetrics.ICollector, ISettingRegistry],
   provides: IMetrics.IEmitter,
-  ...((metrics: PromiseDelegate<IDisposable>) => ({
+  ...((activated: PromiseDelegate<IDisposable>) => ({
     activate: async (
       { serviceManager: { events } },
       collector: IMetrics.ICollector,
       registry: ISettingRegistry
     ) => {
+      const { dispatch } = Private;
+      const registered: { [url: string]: IDisposable } = {};
       const settings = await registry.load(IMetrics.EMITTER);
-      const dispatcher = Private.dispatch(events.stream, collector, settings);
+      const { stream } = events;
+      const dispatcher = dispatch({ collector, registered, settings, stream });
       const delegate = new DisposableDelegate(() => {
         dispatcher.dispose();
-        for (const schema in schemas) {
-          schemas[schema].dispose();
+        for (const schema in registered) {
+          const registration = registered[schema];
+          registration.dispose();
+          delete registered[schema];
         }
       });
       const emitter: IMetrics.Event.Emitter = {
         emit: event => events.emit(event).catch(() => undefined)
       };
-      const schemas: { [url: string]: IDisposable } = {};
-      const register = (
-        schema: string,
-        broadcast: (emitter: IMetrics.Event.Emitter) => IDisposable
-      ) => {
-        if (!delegate.isDisposed && !(schema in schemas)) {
-          schemas[schema] = broadcast(emitter);
+      const register: IMetrics.IEmitter['register'] = (schema, broadcast) => {
+        if (!delegate.isDisposed && !(schema in registered)) {
+          registered[schema] = broadcast(emitter);
         }
       };
-      metrics.resolve(delegate);
+      activated.resolve(delegate);
       return { register };
     },
-    deactivate: async () => (await metrics.promise).dispose()
+    deactivate: async () => (await activated.promise).dispose()
   }))(new PromiseDelegate())
 };
 
@@ -82,7 +83,7 @@ export * from './metrics';
 export default [broadcasts, collector, emitter];
 
 namespace Private {
-  type Event = IMetrics.Event;
+  type Event = IMetrics.Event<unknown>;
 
   type Filter = IMetrics.Filter & { disposed: boolean };
 
@@ -96,44 +97,36 @@ namespace Private {
     disposed: false,
     sensitivity: 'low',
     excluded: {
-      'command-executed': false,
-      'current-changed': false,
-      'jupyter-error': false,
-      'runtime-error': false
+      [IMetrics.Event.CommandExecuted.SCHEMA]: false,
+      [IMetrics.Event.CurrentChanged.SCHEMA]: false,
+      [IMetrics.Event.JupyterError.SCHEMA]: false,
+      [IMetrics.Event.RuntimeError.SCHEMA]: false
     }
   };
 
   const allowed = (filter: Filter, event: JupyterEvent.Emission) => {
-    const type = IMetrics.Event.type(event.schema_id);
     const { anonymous, sensitivity } = (event as unknown as Event).level;
-    const enabled = !filter.disabled && !filter.excluded[type];
+    const url = event.schema_id;
+    const enabled = !filter.disabled && !filter.excluded[url];
     const value = { low: 1, moderate: 2, high: 3 };
     const safe = value[sensitivity] <= value[filter.sensitivity];
     const discreet = anonymous || !filter.anonymous;
     return enabled && safe && discreet;
   };
 
-  const proxy = async (
-    stream: JupyterEvent.Stream,
-    collector: IMetrics.ICollector,
-    filter: Filter
-  ) => {
+  const proxy = async (options: {
+    collector: IMetrics.ICollector;
+    filter: Filter;
+    registered: { [schema: string]: unknown };
+    stream: JupyterEvent.Stream;
+  }): Promise<void> => {
+    const { collector, filter, registered, stream } = options;
     for await (const event of stream) {
       if (filter.disposed) {
         return;
       }
-      const { schema_id } = event;
-      switch (schema_id) {
-        case IMetrics.Event.CommandExecuted.SCHEMA:
-        case IMetrics.Event.CurrentChanged.SCHEMA:
-        case IMetrics.Event.JupyterError.SCHEMA:
-        case IMetrics.Event.RuntimeError.SCHEMA:
-          if (allowed(filter, event)) {
-            void collector.collect(schema_id, event as unknown as Event);
-          }
-          break;
-        default:
-          continue;
+      if (event.schema_id in registered && allowed(filter, event)) {
+        void collector.collect(event.schema_id, event as unknown as Event);
       }
     }
   };
@@ -151,11 +144,13 @@ namespace Private {
     filter.sensitivity = override.sensitivity ?? sensitivity;
   };
 
-  export function dispatch(
-    stream: JupyterEvent.Stream,
-    collector: IMetrics.ICollector,
-    settings: Settings
-  ) {
+  export function dispatch(options: {
+    collector: IMetrics.ICollector;
+    registered: { [schema: string]: unknown };
+    settings: Settings;
+    stream: JupyterEvent.Stream;
+  }): IDisposable {
+    const { collector, registered, settings, stream } = options;
     const filter = structuredClone(DEFAULT_FILTER);
     let defaults: Partial<Filter> = {};
     try {
@@ -166,7 +161,7 @@ namespace Private {
     update(filter, settings, defaults);
     const handler = (settings: Settings) => update(filter, settings, defaults);
     settings.changed.connect(handler);
-    void proxy(stream, collector, filter);
+    void proxy({ collector, filter, registered, stream });
     return new DisposableDelegate(() => {
       filter.disposed = true;
       settings.changed.disconnect(handler);
