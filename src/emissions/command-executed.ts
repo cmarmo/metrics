@@ -1,7 +1,7 @@
 import { CommandRegistry } from '@lumino/commands';
 import { JSONObject } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
-import { IMetrics } from '../metrics';
+import { IMetrics } from '..';
 
 /**
  * Metrics data for a command executed event.

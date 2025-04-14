@@ -1,5 +1,5 @@
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
-import { IMetrics } from '../metrics';
+import { IMetrics } from '..';
 
 /**
  * The runtime error metrics type.

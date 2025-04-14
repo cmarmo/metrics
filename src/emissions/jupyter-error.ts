@@ -1,6 +1,6 @@
 import { IRenderMime, IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
-import { IMetrics } from '../metrics';
+import { IMetrics } from '..';
 
 /**
  * The Jupyter error metrics type.

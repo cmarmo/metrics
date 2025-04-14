@@ -16,19 +16,14 @@ export namespace IMetrics {
   export const COLLECTOR = '@notebook-link/metrics:collector';
 
   /**
-   * ID of the emitter plugin.
+   * ID of the dispatcher plugin.
    */
-  export const EMITTER = '@notebook-link/metrics:emitter';
+  export const DISPATCHER = '@notebook-link/metrics:dispatcher';
 
   /**
    * Token for requiring/providing a collector plugin.
    */
   export const ICollector = new Token<ICollector>(COLLECTOR);
-
-  /**
-   * Token for the emitter plugin.
-   */
-  export const IEmitter = new Token<IEmitter>(EMITTER);
 
   /**
    * The API of a collector plugin.
@@ -38,17 +33,22 @@ export namespace IMetrics {
   }
 
   /**
-   * The API of the emitter plugin.
+   * Token for the dispatcher plugin.
    */
-  export interface IEmitter {
+  export const IDispatcher = new Token<IDispatcher>(DISPATCHER);
+
+  /**
+   * The API of the metrics emission dispatcher plugin.
+   */
+  export interface IDispatcher {
     /**
-     * Registers a broadcast source that emits metrics events.
+     * Registers a broadcast source that emits metrics events for dispatch.
      * @param schema - The event schema URL.
      * @param broadcast - An event broadcaster, returns a clean up disposable.
      */
     register: (
       schema: string,
-      broadcast: (emitter: Event.Emitter) => IDisposable
+      source: (emitter: Event.Emitter) => IDisposable
     ) => void;
   }
 

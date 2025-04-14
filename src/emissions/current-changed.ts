@@ -1,7 +1,7 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { FocusTracker, Widget } from '@lumino/widgets';
-import { IMetrics } from '../metrics';
+import { IMetrics } from '..';
 
 /**
  * The current changed metrics type.

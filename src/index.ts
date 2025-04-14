@@ -10,10 +10,10 @@ import { IMetrics } from './metrics';
 const broadcasts: JupyterFrontEndPlugin<void> = {
   id: '@notebook-link/metrics:broadcasts',
   description: 'An extension that broadcasts default metrics',
-  requires: [IMetrics.IEmitter, IRenderMimeRegistry, ISettingRegistry],
+  requires: [IMetrics.IDispatcher, IRenderMimeRegistry, ISettingRegistry],
   activate: (
     { commands, shell },
-    { register }: IMetrics.IEmitter,
+    { register }: IMetrics.IDispatcher,
     rendermimes: IRenderMimeRegistry
   ) => {
     register(IMetrics.Event.CommandExecuted.SCHEMA, emitter =>
@@ -39,12 +39,12 @@ const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
   activate: () => ({ collect: async () => undefined })
 };
 
-const emitter: JupyterFrontEndPlugin<IMetrics.IEmitter> = {
-  id: IMetrics.EMITTER,
+const dispatcher: JupyterFrontEndPlugin<IMetrics.IDispatcher> = {
+  id: IMetrics.DISPATCHER,
   description: 'An extension that emits and collects metrics',
   autoStart: true,
   requires: [IMetrics.ICollector, ISettingRegistry],
-  provides: IMetrics.IEmitter,
+  provides: IMetrics.IDispatcher,
   ...((activated: PromiseDelegate<IDisposable>) => ({
     activate: async (
       { serviceManager: { events } },
@@ -53,7 +53,7 @@ const emitter: JupyterFrontEndPlugin<IMetrics.IEmitter> = {
     ) => {
       const { dispatch } = Private;
       const registered: { [url: string]: IDisposable } = {};
-      const settings = await registry.load(IMetrics.EMITTER);
+      const settings = await registry.load(IMetrics.DISPATCHER);
       const { stream } = events;
       const dispatcher = dispatch({ collector, registered, settings, stream });
       const delegate = new DisposableDelegate(() => {
@@ -67,9 +67,9 @@ const emitter: JupyterFrontEndPlugin<IMetrics.IEmitter> = {
       const emitter: IMetrics.Event.Emitter = {
         emit: event => events.emit(event).catch(() => undefined)
       };
-      const register: IMetrics.IEmitter['register'] = (schema, broadcast) => {
+      const register: IMetrics.IDispatcher['register'] = (schema, source) => {
         if (!delegate.isDisposed && !(schema in registered)) {
-          registered[schema] = broadcast(emitter);
+          registered[schema] = source(emitter);
         }
       };
       activated.resolve(delegate);
@@ -80,7 +80,7 @@ const emitter: JupyterFrontEndPlugin<IMetrics.IEmitter> = {
 };
 
 export * from './metrics';
-export default [broadcasts, collector, emitter];
+export default [broadcasts, collector, dispatcher];
 
 namespace Private {
   type Event = IMetrics.Event<unknown>;
