@@ -7,36 +7,36 @@ import { PromiseDelegate } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { IMetrics } from './metrics';
 
-const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
-  id: IMetrics.COLLECTOR,
-  description: 'A no-op collector for metrics emissions',
-  provides: IMetrics.ICollector,
-  activate: () => ({ collect: async (a, b) => console.log(a, b) })
-};
-
 const broadcasts: JupyterFrontEndPlugin<void> = {
   id: '@notebook-link/metrics:broadcasts',
   description: 'An extension that broadcasts default metrics',
   requires: [IMetrics.IEmitter, IRenderMimeRegistry, ISettingRegistry],
   activate: (
     { commands, shell },
-    emitter: IMetrics.IEmitter,
+    { register }: IMetrics.IEmitter,
     rendermimes: IRenderMimeRegistry
   ) => {
-    emitter.register(IMetrics.Event.CommandExecuted.SCHEMA, emitter =>
+    register(IMetrics.Event.CommandExecuted.SCHEMA, emitter =>
       IMetrics.Event.CommandExecuted.broadcast(emitter, commands)
     );
-    emitter.register(IMetrics.Event.CurrentChanged.SCHEMA, emitter =>
+    register(IMetrics.Event.CurrentChanged.SCHEMA, emitter =>
       IMetrics.Event.CurrentChanged.broadcast(emitter, shell)
     );
-    emitter.register(IMetrics.Event.JupyterError.SCHEMA, emitter =>
+    register(IMetrics.Event.JupyterError.SCHEMA, emitter =>
       IMetrics.Event.JupyterError.broadcast(emitter, rendermimes)
     );
-    emitter.register(IMetrics.Event.RuntimeError.SCHEMA, emitter =>
+    register(IMetrics.Event.RuntimeError.SCHEMA, emitter =>
       IMetrics.Event.RuntimeError.broadcast(emitter)
     );
   },
   autoStart: true
+};
+
+const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
+  id: IMetrics.COLLECTOR,
+  description: 'A no-op collector for metrics emissions',
+  provides: IMetrics.ICollector,
+  activate: () => ({ collect: async () => undefined })
 };
 
 const emitter: JupyterFrontEndPlugin<IMetrics.IEmitter> = {
@@ -84,25 +84,10 @@ export default [broadcasts, collector, emitter];
 
 namespace Private {
   type Event = IMetrics.Event<unknown>;
-
   type Filter = IMetrics.Filter & { disposed: boolean };
-
+  type Override = Partial<Filter>;
   type Sensitivity = IMetrics.Event.Sensitivity;
-
   type Settings = ISettingRegistry.ISettings;
-
-  const DEFAULT_FILTER: Filter = {
-    anonymous: true,
-    disabled: false,
-    disposed: false,
-    sensitivity: 'low',
-    excluded: {
-      [IMetrics.Event.CommandExecuted.SCHEMA]: false,
-      [IMetrics.Event.CurrentChanged.SCHEMA]: false,
-      [IMetrics.Event.JupyterError.SCHEMA]: false,
-      [IMetrics.Event.RuntimeError.SCHEMA]: false
-    }
-  };
 
   const allowed = (filter: Filter, event: JupyterEvent.Emission) => {
     const { anonymous, sensitivity } = (event as unknown as Event).level;
@@ -131,11 +116,7 @@ namespace Private {
     }
   };
 
-  const update = (
-    filter: Filter,
-    settings: Settings,
-    override: Partial<Filter>
-  ) => {
+  const update = (filter: Filter, settings: Settings, override: Override) => {
     const anonymous = settings.get('anonymous').composite as boolean;
     const disabled = settings.get('disabled').composite as boolean;
     const sensitivity = settings.get('sensitivity').composite as Sensitivity;
@@ -151,8 +132,19 @@ namespace Private {
     stream: JupyterEvent.Stream;
   }): IDisposable {
     const { collector, registered, settings, stream } = options;
-    const filter = structuredClone(DEFAULT_FILTER);
-    let defaults: Partial<Filter> = {};
+    const filter: Filter = {
+      anonymous: true,
+      disabled: false,
+      disposed: false,
+      sensitivity: 'low',
+      excluded: {
+        [IMetrics.Event.CommandExecuted.SCHEMA]: false,
+        [IMetrics.Event.CurrentChanged.SCHEMA]: false,
+        [IMetrics.Event.JupyterError.SCHEMA]: false,
+        [IMetrics.Event.RuntimeError.SCHEMA]: false
+      }
+    };
+    let defaults: Override = {};
     try {
       defaults = JSON.parse(PageConfig.getOption('notebook_link_metrics'));
     } catch (_) {
