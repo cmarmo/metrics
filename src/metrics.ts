@@ -44,11 +44,15 @@ export namespace IMetrics {
     /**
      * Registers a broadcast source that emits metrics events for dispatch.
      * @param schema - The event schema URL.
-     * @param broadcast - An event broadcaster, returns a clean up disposable.
+     * @param source - An event broadcast source, returns a clean up disposable.
+     *
+     * #### Notes
+     * In cases where no broadcast is necessary (e.g., where a UI component
+     * automatically emits metrics events), then `source` can be omitted.
      */
     register: (
       schema: string,
-      source: (emitter: Event.Emitter) => IDisposable
+      source?: (emitter: Event.Emitter) => IDisposable
     ) => void;
   }
 

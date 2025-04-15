@@ -5,7 +5,7 @@ import { Event as JupyterEvent } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
-import { IMetrics } from './metrics';
+import { IMetrics } from '.';
 
 const broadcasts: JupyterFrontEndPlugin<void> = {
   id: '@notebook-link/metrics:broadcasts',
@@ -41,7 +41,7 @@ const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
 
 const dispatcher: JupyterFrontEndPlugin<IMetrics.IDispatcher> = {
   id: IMetrics.DISPATCHER,
-  description: 'An extension that emits and collects metrics',
+  description: 'An extension that dispatches registered metrics to a collector',
   autoStart: true,
   requires: [IMetrics.ICollector, ISettingRegistry],
   provides: IMetrics.IDispatcher,
@@ -52,28 +52,29 @@ const dispatcher: JupyterFrontEndPlugin<IMetrics.IDispatcher> = {
       registry: ISettingRegistry
     ) => {
       const { dispatch } = Private;
-      const registered: { [url: string]: IDisposable } = {};
-      const settings = await registry.load(IMetrics.DISPATCHER);
       const { stream } = events;
-      const dispatcher = dispatch({ collector, registered, settings, stream });
+      const registrar = new Map<string, IDisposable | null>();
+      const settings = await registry.load(IMetrics.DISPATCHER);
+      const dispatcher = dispatch({ collector, registrar, settings, stream });
       const delegate = new DisposableDelegate(() => {
-        dispatcher.dispose();
-        for (const schema in registered) {
-          const registration = registered[schema];
-          registration.dispose();
-          delete registered[schema];
+        for (const schema of registrar.keys()) {
+          const registration = registrar.get(schema);
+          registrar.delete(schema);
+          registration?.dispose();
         }
+        dispatcher.dispose();
       });
       const emitter: IMetrics.Event.Emitter = {
         emit: event => events.emit(event).catch(() => undefined)
       };
-      const register: IMetrics.IDispatcher['register'] = (schema, source) => {
-        if (!delegate.isDisposed && !(schema in registered)) {
-          registered[schema] = source(emitter);
+      activated.resolve(delegate);
+      return {
+        register: (schema, source) => {
+          if (!delegate.isDisposed && !registrar.has(schema)) {
+            registrar.set(schema, source?.(emitter) || null);
+          }
         }
       };
-      activated.resolve(delegate);
-      return { register };
     },
     deactivate: async () => (await activated.promise).dispose()
   }))(new PromiseDelegate())
@@ -102,15 +103,15 @@ namespace Private {
   const proxy = async (options: {
     collector: IMetrics.ICollector;
     filter: Filter;
-    registered: { [schema: string]: unknown };
+    registrar: Map<string, unknown>;
     stream: JupyterEvent.Stream;
   }): Promise<void> => {
-    const { collector, filter, registered, stream } = options;
+    const { collector, filter, registrar, stream } = options;
     for await (const event of stream) {
       if (filter.disposed) {
         return;
       }
-      if (event.schema_id in registered && allowed(filter, event)) {
+      if (registrar.has(event.schema_id) && allowed(filter, event)) {
         void collector.collect(event.schema_id, event as unknown as Event);
       }
     }
@@ -127,11 +128,11 @@ namespace Private {
 
   export function dispatch(options: {
     collector: IMetrics.ICollector;
-    registered: { [schema: string]: unknown };
+    registrar: Map<string, unknown>;
     settings: Settings;
     stream: JupyterEvent.Stream;
   }): IDisposable {
-    const { collector, registered, settings, stream } = options;
+    const { collector, registrar, settings, stream } = options;
     const filter: Filter = {
       anonymous: true,
       disabled: false,
@@ -153,7 +154,7 @@ namespace Private {
     update(filter, settings, defaults);
     const handler = (settings: Settings) => update(filter, settings, defaults);
     settings.changed.connect(handler);
-    void proxy({ collector, filter, registered, stream });
+    void proxy({ collector, filter, registrar, stream });
     return new DisposableDelegate(() => {
       filter.disposed = true;
       settings.changed.disconnect(handler);
