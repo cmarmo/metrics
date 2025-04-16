@@ -4,7 +4,7 @@ A JupyterLab/JupyterLite extension for Jupyter UI metrics.
 
 ## Usage
 
-This package contains three Jupyter extensions.
+This package contains four Jupyter extensions.
 
 ### Jupyter server extension
 
@@ -17,7 +17,7 @@ The Jupyter server extension, `notebook_link_metrics` registers event schemas fo
 
 ### JupyterLab/JupyterLite dispatcher extension
 
-The front-end dispatcher extension listens for registered events and dispatches them based on filter and user settings to a collector extension.
+The front-end dispatcher extension listens for registered events and dispatches them based on filter and user settings to a collector extension. It also provides a single API point of entry, a function called `register(...)`, which registers an event schema URL and an optional broadcast source that emits metrics events for dispatch. In cases where no broadcast is necessary (e.g., where a UI component automatically emits metrics events), the `source` argument can be omitted.
 
 ### JupyterLab/JupyterLite collector extension
 
@@ -43,6 +43,10 @@ const collector: JupyterFrontEndPlugin<IMetrics.ICollector> = {
   })
 };
 ```
+
+### JupyterLab/JupyterLite broadcasts extension
+
+This frontend extension registers the four metrics event types that ship with this package.
 
 ### Configuration
 
