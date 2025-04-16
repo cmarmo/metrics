@@ -15,13 +15,13 @@ The Jupyter server extension, `notebook_link_metrics` registers event schemas fo
 3. `JupyterError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a MIME bundle that contains a `application/vnd.jupyter.error` value is rendered
 4. `RuntimeError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time an `error` or `unhandledpromiserejection` listener on the application `window` is invoked
 
-### JupyterLab/JupyterLite emitter extension
+### JupyterLab/JupyterLite dispatcher extension
 
-The front-end emitter extension emits the events registered by the server extension (in JupyterLite, these events are emitted without a server validating them; in JupyterLab, the schemas registered by the server extension are used for validation of emissions).
+The front-end dispatcher extension listens for registered events and dispatches them based on filter and user settings to a collector extension.
 
 ### JupyterLab/JupyterLite collector extension
 
-The collector extension is the client that receives metrics emissions. The default implementation is a no-op and in production, the extension `@notebook-link/metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the emitter extension to use. The `interface` for a collector is minimal:
+The collector extension is the client that receives metrics emissions. The default implementation is a no-op and in production, the extension `@notebook-link/metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the dispatcher extension to use. The `interface` for a collector is minimal:
 
 ```ts
 interface ICollector {
@@ -56,7 +56,7 @@ deployment, this package supports setting a path to a YAML file as an
 environment variable, `NOTEBOOK_LINK_METRICS_OVERRIDE`.
 
 The contents of an override file are the same keys that exist in the user
-settings (`emitter.json`) and **if set, they always take precedence over user
+settings (`dispatcher.json`) and **if set, they always take precedence over user
 settings**.
 
 Here is an example override file for the most permissive emission settings:
@@ -65,10 +65,10 @@ Here is an example override file for the most permissive emission settings:
 anonymous: false
 disabled: false
 excluded:
-  command-executed: false
-  current-changed: false
-  jupyter-error: false
-  runtime-error: false
+  'https://schema.notebook.link/metrics/command-executed/v1': false
+  'https://schema.notebook.link/metrics/current-changed/v1': false
+  'https://schema.notebook.link/metrics/jupyter-error/v1': false
+  'https://schema.notebook.link/metrics/runtime-error/v1': false
 sensitivity: high
 ```
 
