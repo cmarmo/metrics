@@ -24,15 +24,31 @@
     },
     "excluded": {
       "title": "Excluded emissions",
-      "description": "Ignored if page config overrides are present or if emissions are disabled",
+      "description": "Full schema URLs to exclude, ignored if page config overrides are present or if emissions are disabled",
       "type": "object",
       "properties": {
-        "command-executed": { "type": "boolean", "default": false },
-        "current-changed": { "type": "boolean", "default": false },
-        "jupyter-error": { "type": "boolean", "default": false },
-        "runtime-error": { "type": "boolean", "default": false }
+        "https://schema.notebook.link/metrics/command-executed/v1": {
+          "type": "boolean",
+          "default": false,
+          "title": "Exclude command executed emissions"
+        },
+        "https://schema.notebook.link/metrics/current-changed/v1": {
+          "type": "boolean",
+          "default": false,
+          "title": "Exclude current activity changed emissions"
+        },
+        "https://schema.notebook.link/metrics/jupyter-error/v1": {
+          "type": "boolean",
+          "default": false,
+          "title": "Exclude Jupyter output error emissions"
+        },
+        "https://schema.notebook.link/metrics/runtime-error/v1": {
+          "type": "boolean",
+          "default": false,
+          "title": "Exclude frontend runtime error emissions"
+        }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     }
   },
   "additionalProperties": false

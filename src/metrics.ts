@@ -1,5 +1,6 @@
 import { Event as JupyterEvent } from '@jupyterlab/services';
 import { Token } from '@lumino/coreutils';
+import { IDisposable } from '@lumino/disposable';
 import { CommandExecuted as CE_IMPORT } from './emissions/command-executed';
 import { CurrentChanged as CC_IMPORT } from './emissions/current-changed';
 import { JupyterError as JP_IMPORT } from './emissions/jupyter-error';
@@ -15,9 +16,9 @@ export namespace IMetrics {
   export const COLLECTOR = '@notebook-link/metrics:collector';
 
   /**
-   * ID of the emitter plugin.
+   * ID of the dispatcher plugin.
    */
-  export const EMITTER = '@notebook-link/metrics:emitter';
+  export const DISPATCHER = '@notebook-link/metrics:dispatcher';
 
   /**
    * Token for requiring/providing a collector plugin.
@@ -25,27 +26,41 @@ export namespace IMetrics {
   export const ICollector = new Token<ICollector>(COLLECTOR);
 
   /**
-   * The public API of a collector plugin.
+   * The API of a collector plugin.
    */
   export interface ICollector {
-    collect: (schema: string, event: Event) => Promise<void>;
+    collect: (schema: string, event: Event<any>) => Promise<void>;
   }
 
   /**
-   * A minimal emitter of metrics events,
-   * (compatible with e.g., Event.IManager from @jupyterlab/services).
+   * Token for the dispatcher plugin.
    */
-  export interface IEmitter {
-    emit(event: JupyterEvent.Request): Promise<void>;
+  export const IDispatcher = new Token<IDispatcher>(DISPATCHER);
+
+  /**
+   * The API of the metrics emission dispatcher plugin.
+   */
+  export interface IDispatcher {
+    /**
+     * Registers a broadcast source that emits metrics events for dispatch.
+     * @param schema - The event schema URL.
+     * @param source - An event broadcast source, returns a clean up disposable.
+     *
+     * #### Notes
+     * In cases where no broadcast is necessary (e.g., where a UI component
+     * automatically emits metrics events), then `source` can be omitted.
+     */
+    register: (
+      schema: string,
+      source?: (emitter: Event.Emitter) => IDisposable
+    ) => void;
   }
 
   /**
    * A generic metrics event.
    * @typeparam T - The type of the metrics payload of the event.
    */
-  export type Event<
-    T = Event.CommandExecuted | Event.CurrentChanged | Event.RuntimeError
-  > = {
+  export type Event<T> = {
     /**
      * The sensitivity / anonymity level of an event.
      */
@@ -67,6 +82,12 @@ export namespace IMetrics {
    */
   export namespace Event {
     /**
+     * A minimal emitter of metrics events,
+     * (compatible with e.g., Event.IManager from @jupyterlab/services).
+     */
+    export type Emitter = { emit(event: JupyterEvent.Request): Promise<void> };
+
+    /**
      * Whether the metrics data is anonymous and how sensitive it is.
      */
     export type Level = { anonymous: boolean; sensitivity: Sensitivity };
@@ -75,22 +96,6 @@ export namespace IMetrics {
      * Event metrics data sensitivity.
      */
     export type Sensitivity = 'high' | 'moderate' | 'low';
-
-    /**
-     * Metrics emission type.
-     */
-    export type Type =
-      | 'command-executed'
-      | 'current-changed'
-      | 'jupyter-error'
-      | 'runtime-error';
-
-    /**
-     * A utility function that returns the event type of a known schema URL.
-     * @param url - The schema ID of an emission
-     * @returns the event type.
-     */
-    export const type = (url: string) => url.split('/').reverse()[1] as Type;
 
     export import CommandExecuted = CE_IMPORT;
     export import CurrentChanged = CC_IMPORT;
@@ -103,6 +108,6 @@ export namespace IMetrics {
    */
   export type Filter = Event.Level & {
     disabled: boolean;
-    excluded: { [key in Event.Type]: boolean };
+    excluded: { [schema: string]: boolean };
   };
 }

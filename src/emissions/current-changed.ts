@@ -1,7 +1,7 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { FocusTracker, Widget } from '@lumino/widgets';
-import { IMetrics } from '../metrics';
+import { IMetrics } from '..';
 
 /**
  * The current changed metrics type.
@@ -29,7 +29,7 @@ export namespace CurrentChanged {
    * @returns a disposable that stops broadcasting when disposed.
    */
   export function broadcast(
-    emitter: IMetrics.IEmitter,
+    emitter: IMetrics.Event.Emitter,
     shell: JupyterFrontEnd.IShell
   ): IDisposable {
     const handler = (

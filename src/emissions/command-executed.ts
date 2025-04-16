@@ -1,7 +1,7 @@
 import { CommandRegistry } from '@lumino/commands';
 import { JSONObject } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
-import { IMetrics } from '../metrics';
+import { IMetrics } from '..';
 
 /**
  * Metrics data for a command executed event.
@@ -35,7 +35,7 @@ export namespace CommandExecuted {
    * @returns a disposable that stops broadcasting when disposed.
    */
   export function broadcast(
-    emitter: IMetrics.IEmitter,
+    emitter: IMetrics.Event.Emitter,
     commands: CommandRegistry
   ): IDisposable {
     const handler = (
