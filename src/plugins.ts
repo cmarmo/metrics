@@ -10,7 +10,7 @@ import { IMetrics } from '.';
 export const broadcasts: JupyterFrontEndPlugin<void> = {
   id: '@notebook-link/metrics:broadcasts',
   description: 'An extension that broadcasts default metrics',
-  requires: [IMetrics.IDispatcher, IRenderMimeRegistry, ISettingRegistry],
+  requires: [IMetrics.IDispatcher, IRenderMimeRegistry],
   activate: (
     { commands, shell },
     { register }: IMetrics.IDispatcher,
