@@ -1,6 +1,6 @@
-import { Event as JupyterEvent } from '@jupyterlab/services';
+import type { Event as JupyterEvent } from '@jupyterlab/services';
 import { Token } from '@lumino/coreutils';
-import { IDisposable } from '@lumino/disposable';
+import type { IDisposable } from '@lumino/disposable';
 import { CommandExecuted as CE_IMPORT } from './emissions/command-executed';
 import { CurrentChanged as CC_IMPORT } from './emissions/current-changed';
 import { JupyterError as JP_IMPORT } from './emissions/jupyter-error';

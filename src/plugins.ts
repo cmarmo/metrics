@@ -1,7 +1,7 @@
-import { JupyterFrontEndPlugin } from '@jupyterlab/application';
+import type { JupyterFrontEndPlugin } from '@jupyterlab/application';
 import { PageConfig } from '@jupyterlab/coreutils';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
-import { Event as JupyterEvent } from '@jupyterlab/services';
+import type { Event as JupyterEvent } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
@@ -98,15 +98,20 @@ namespace Private {
 
   const initialize = (filter: Filter, settings: Settings): IDisposable => {
     let defaults: Override;
+    const excluded = { ...filter.excluded };
     try {
       defaults = JSON.parse(PageConfig.getOption('notebook_link_metrics'));
     } catch (_) {
       defaults = {};
     }
     const update = (filter: Filter, settings: Settings, override: Override) => {
+      const configured = (settings.composite.excluded ??
+        {}) as IMetrics.Filter['excluded'];
+      const overridden = override.excluded ?? {};
       const { anonymous, disabled, sensitivity } = settings.composite;
       filter.anonymous = override.anonymous ?? anonymous!;
       filter.disabled = override.disabled ?? disabled!;
+      filter.excluded = { ...excluded, ...configured, ...overridden };
       filter.sensitivity = override.sensitivity ?? sensitivity!;
     };
     const handler = (settings: Settings) => update(filter, settings, defaults);

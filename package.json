@@ -11,7 +11,7 @@
     "bugs": {
         "url": "https://github.com/notebook-link/metrics/issues"
     },
-    "license": "UNLICENSED",
+    "license": "BSD-3-Clause",
     "author": {
         "name": "Afshin T. Darian",
         "email": "git@darian.link"
