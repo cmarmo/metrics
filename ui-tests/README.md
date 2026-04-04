@@ -16,15 +16,16 @@ The default configuration will produce video for failing tests and an HTML repor
 
 ## Run the tests
 
-> All commands are assumed to be executed from the root directory
+> All commands are assumed to be executed from the root directory and use the
+> existing `metrics` mamba environment.
 
 To run the tests, you need to:
 
 1. Compile the extension:
 
 ```sh
-jlpm install
-jlpm build:prod
+mamba run -n metrics jlpm install
+mamba run -n metrics jlpm build:prod
 ```
 
 > Check the extension is installed in JupyterLab.
@@ -33,8 +34,8 @@ jlpm build:prod
 
 ```sh
 cd ./ui-tests
-jlpm install
-jlpm playwright install
+mamba run -n metrics jlpm install
+mamba run -n metrics jlpm playwright install
 cd ..
 ```
 
@@ -42,7 +43,7 @@ cd ..
 
 ```sh
 cd ./ui-tests
-jlpm playwright test
+PLAYWRIGHT_HTML_OPEN=never mamba run -n metrics jlpm playwright test
 ```
 
 Test results will be shown in the terminal. In case of any test failures, the test report
@@ -52,7 +53,8 @@ for configuring that behavior.
 
 ## Update the tests snapshots
 
-> All commands are assumed to be executed from the root directory
+> All commands are assumed to be executed from the root directory and use the
+> existing `metrics` mamba environment.
 
 If you are comparing snapshots to validate your tests, you may need to update
 the reference snapshots stored in the repository. To do that, you need to:
@@ -60,8 +62,8 @@ the reference snapshots stored in the repository. To do that, you need to:
 1. Compile the extension:
 
 ```sh
-jlpm install
-jlpm build:prod
+mamba run -n metrics jlpm install
+mamba run -n metrics jlpm build:prod
 ```
 
 > Check the extension is installed in JupyterLab.
@@ -70,8 +72,8 @@ jlpm build:prod
 
 ```sh
 cd ./ui-tests
-jlpm install
-jlpm playwright install
+mamba run -n metrics jlpm install
+mamba run -n metrics jlpm playwright install
 cd ..
 ```
 
@@ -79,7 +81,7 @@ cd ..
 
 ```sh
 cd ./ui-tests
-jlpm playwright test -u
+mamba run -n metrics jlpm playwright test -u
 ```
 
 > Some discrepancy may occurs between the snapshots generated on your computer and
@@ -89,15 +91,16 @@ jlpm playwright test -u
 
 ## Create tests
 
-> All commands are assumed to be executed from the root directory
+> All commands are assumed to be executed from the root directory and use the
+> existing `metrics` mamba environment.
 
 To create tests, the easiest way is to use the code generator tool of playwright:
 
 1. Compile the extension:
 
 ```sh
-jlpm install
-jlpm build:prod
+mamba run -n metrics jlpm install
+mamba run -n metrics jlpm build:prod
 ```
 
 > Check the extension is installed in JupyterLab.
@@ -106,8 +109,8 @@ jlpm build:prod
 
 ```sh
 cd ./ui-tests
-jlpm install
-jlpm playwright install
+mamba run -n metrics jlpm install
+mamba run -n metrics jlpm playwright install
 cd ..
 ```
 
@@ -115,27 +118,28 @@ cd ..
 
 ```sh
 cd ./ui-tests
-jlpm start
+mamba run -n metrics jlpm start
 ```
 
 4. Execute the [Playwright code generator](https://playwright.dev/docs/codegen) in **another terminal**:
 
 ```sh
 cd ./ui-tests
-jlpm playwright codegen localhost:8888
+mamba run -n metrics jlpm playwright codegen localhost:8888
 ```
 
 ## Debug tests
 
-> All commands are assumed to be executed from the root directory
+> All commands are assumed to be executed from the root directory and use the
+> existing `metrics` mamba environment.
 
 To debug tests, a good way is to use the inspector tool of playwright:
 
 1. Compile the extension:
 
 ```sh
-jlpm install
-jlpm build:prod
+mamba run -n metrics jlpm install
+mamba run -n metrics jlpm build:prod
 ```
 
 > Check the extension is installed in JupyterLab.
@@ -144,8 +148,8 @@ jlpm build:prod
 
 ```sh
 cd ./ui-tests
-jlpm install
-jlpm playwright install
+mamba run -n metrics jlpm install
+mamba run -n metrics jlpm playwright install
 cd ..
 ```
 
@@ -153,7 +157,7 @@ cd ..
 
 ```sh
 cd ./ui-tests
-jlpm playwright test --debug
+mamba run -n metrics jlpm playwright test --debug
 ```
 
 ## Upgrade Playwright and the browsers
@@ -162,6 +166,6 @@ To update the web browser versions, you must update the package `@playwright/tes
 
 ```sh
 cd ./ui-tests
-jlpm up "@playwright/test"
-jlpm playwright install
+mamba run -n metrics jlpm up "@playwright/test"
+mamba run -n metrics jlpm playwright install
 ```
