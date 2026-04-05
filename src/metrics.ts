@@ -13,12 +13,12 @@ export namespace IMetrics {
   /**
    * ID of the collector plugin.
    */
-  export const COLLECTOR = '@notebook-link/metrics:collector';
+  export const COLLECTOR = 'notebook-metrics:collector';
 
   /**
    * ID of the dispatcher plugin.
    */
-  export const DISPATCHER = '@notebook-link/metrics:dispatcher';
+  export const DISPATCHER = 'notebook-metrics:dispatcher';
 
   /**
    * Token for requiring/providing a collector plugin.

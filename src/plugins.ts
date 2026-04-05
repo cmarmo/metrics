@@ -8,7 +8,7 @@ import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { IMetrics } from '.';
 
 export const broadcasts: JupyterFrontEndPlugin<void> = {
-  id: '@notebook-link/metrics:broadcasts',
+  id: 'notebook-metrics:broadcasts',
   description: 'An extension that broadcasts default metrics',
   requires: [IMetrics.IDispatcher, IRenderMimeRegistry],
   activate: (
@@ -100,7 +100,7 @@ namespace Private {
     let defaults: Override;
     const excluded = { ...filter.excluded };
     try {
-      defaults = JSON.parse(PageConfig.getOption('notebook_link_metrics'));
+      defaults = JSON.parse(PageConfig.getOption('notebook_metrics'));
     } catch (_) {
       defaults = {};
     }

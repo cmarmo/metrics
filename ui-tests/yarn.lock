@@ -1559,15 +1559,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@notebook-link/metrics-ui-tests@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "@notebook-link/metrics-ui-tests@workspace:."
-  dependencies:
-    "@jupyterlab/galata": ^5.5.6
-    "@playwright/test": ^1.59.1
-  languageName: unknown
-  linkType: soft
-
 "@npmcli/agent@npm:^4.0.0":
   version: 4.0.0
   resolution: "@npmcli/agent@npm:4.0.0"
@@ -4536,6 +4527,15 @@ __metadata:
   checksum: 7a5d9ab0629eaec1944a95438cc4efa6418ed2834aa8eb21a1bea579a7d8ac3e30120131855376a96ef59ab0e23ad8e0bc94d3349770a95e5cb7119339f7c7fb
   languageName: node
   linkType: hard
+
+"notebook-metrics-ui-tests@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "notebook-metrics-ui-tests@workspace:."
+  dependencies:
+    "@jupyterlab/galata": ^5.5.6
+    "@playwright/test": ^1.59.1
+  languageName: unknown
+  linkType: soft
 
 "nwsapi@npm:^2.2.2":
   version: 2.2.23

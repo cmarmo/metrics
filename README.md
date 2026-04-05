@@ -1,6 +1,9 @@
-# `@notebook-link/metrics`
+# `notebook-metrics`
 
 A JupyterLab/JupyterLite extension for Jupyter UI metrics.
+
+If you are integrating the package for the first time, start with the
+[onboarding guide](./ONBOARDING.md).
 
 ## Usage
 
@@ -8,7 +11,7 @@ This package contains four Jupyter extensions.
 
 ### Jupyter server extension
 
-The Jupyter server extension, `notebook_link_metrics` registers event schemas for four types of metrics events:
+The Jupyter server extension, `notebook_metrics` registers event schemas for four types of metrics events:
 
 1. `CommandExecuted` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time the command registry executes a command
 2. `CurrentChanged` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a non-`null` new value is emitted by the application shell's `currentChanged` signal
@@ -21,7 +24,7 @@ The front-end dispatcher extension listens for registered events and dispatches 
 
 ### JupyterLab/JupyterLite collector extension
 
-The collector extension is the client that receives metrics emissions. The default implementation is a no-op and in production, the extension `@notebook-link/metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the dispatcher extension to use. The `interface` for a collector is minimal:
+The collector extension is the client that receives metrics emissions. The default implementation is a no-op and in production, the extension `notebook-metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the dispatcher extension to use. The `interface` for a collector is minimal:
 
 ```ts
 interface ICollector {
@@ -57,7 +60,7 @@ emissions: the JupyterLab user settings system or using the JupyterLab
 There are several ways to populate `PageConfig`, (which is an object literal
 loaded in the HTML page that hosts JupyterLab). As a convenience for JupyterLab
 deployment, this package supports setting a path to a YAML file as an
-environment variable, `NOTEBOOK_LINK_METRICS_OVERRIDE`.
+environment variable, `NOTEBOOK_METRICS_OVERRIDE`.
 
 The contents of an override file are the same keys that exist in the user
 settings (`dispatcher.json`) and **if set, they always take precedence over user
@@ -80,15 +83,11 @@ sensitivity: high
 
 - Python >= 3.9
 - JupyterLab >= 4.0.0,<5
-- Validated locally with JupyterLab 4.5.6 and Jupyter Server 2.17.0
 
 ## Install
 
-This package is not published to PyPI yet. To install it from GitHub, run:
-
 ```bash
-mamba run -n metrics python -m pip install \
-  git+https://github.com/notebook-link/metrics.git
+python -m pip install notebook-metrics
 ```
 
 ## Uninstall
@@ -96,7 +95,7 @@ mamba run -n metrics python -m pip install \
 To remove the extension, execute:
 
 ```bash
-mamba run -n metrics python -m pip uninstall notebook_link_metrics
+python -m pip uninstall notebook-metrics
 ```
 
 ## Contributing
@@ -105,28 +104,26 @@ mamba run -n metrics python -m pip uninstall notebook_link_metrics
 
 Note: You will need NodeJS to build the extension package.
 
-These commands assume the existing `metrics` mamba environment.
-
 This repo uses `jlpm`, JupyterLab's pinned Yarn wrapper.
 
 ```bash
 # Clone the repo to your local environment
 # Change directory to the metrics directory
 # Install package in development mode
-mamba run -n metrics python -m pip install -e ".[test]"
+python -m pip install -e ".[test]"
 # Link your development version of the extension with JupyterLab
-mamba run -n metrics jupyter labextension develop . --overwrite
+jupyter labextension develop . --overwrite
 # Rebuild extension Typescript source after making changes
-mamba run -n metrics jlpm build
+jlpm build
 ```
 
 You can watch the source directory and run JupyterLab at the same time in different terminals to watch for changes in the extension's source and automatically rebuild the extension.
 
 ```bash
 # Watch the source directory in one terminal, automatically rebuilding when needed
-mamba run -n metrics jlpm watch
+jlpm watch
 # Run JupyterLab in another terminal
-mamba run -n metrics jupyter lab
+jupyter lab
 ```
 
 With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
@@ -134,18 +131,18 @@ With the watch command running, every saved change will immediately be built loc
 By default, the `jlpm build` command generates the source maps for this extension to make it easier to debug using the browser dev tools. To also generate source maps for the JupyterLab core extensions, you can run the following command:
 
 ```bash
-mamba run -n metrics jupyter lab build --minimize=False
+jupyter lab build --minimize=False
 ```
 
 ### Development uninstall
 
 ```bash
-mamba run -n metrics python -m pip uninstall notebook_link_metrics
+python -m pip uninstall notebook-metrics
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
-command. To find its location, you can run `mamba run -n metrics jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `@notebook-link/metrics` within that folder.
+command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
+folder is located. Then you can remove the symlink named `notebook-metrics` within that folder.
 
 ### Testing the extension
 
@@ -154,8 +151,8 @@ folder is located. Then you can remove the symlink named `@notebook-link/metrics
 Install the editable package with test extras, then run:
 
 ```sh
-mamba run -n metrics python -m pip install -e ".[test]"
-mamba run -n metrics pytest -vv -r ap --cov notebook_link_metrics
+python -m pip install -e ".[test]"
+pytest -vv -r ap --cov notebook_metrics
 ```
 
 #### Frontend tests
@@ -165,8 +162,8 @@ This extension is using [Jest](https://jestjs.io/) for JavaScript code testing.
 To execute them, execute:
 
 ```sh
-mamba run -n metrics jlpm install
-mamba run -n metrics jlpm test
+jlpm install
+jlpm test
 ```
 
 #### Integration tests
@@ -179,11 +176,11 @@ More information are provided within the [ui-tests](./ui-tests/README.md) README
 The local flow that is currently validated in this repo is:
 
 ```sh
-mamba run -n metrics jlpm build:prod
+jlpm build:prod
 cd ui-tests
-mamba run -n metrics jlpm install
-mamba run -n metrics jlpm playwright install
-PLAYWRIGHT_HTML_OPEN=never mamba run -n metrics jlpm playwright test
+jlpm install
+jlpm playwright install
+PLAYWRIGHT_HTML_OPEN=never jlpm playwright test
 cd ..
 ```
 

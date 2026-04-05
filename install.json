@@ -1,5 +1,5 @@
 {
   "packageManager": "python",
-  "packageName": "notebook_link_metrics",
-  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package notebook_link_metrics"
+  "packageName": "notebook-metrics",
+  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package notebook-metrics"
 }

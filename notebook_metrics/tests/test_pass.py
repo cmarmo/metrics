@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, timezone
 
-from notebook_link_metrics import schemas
+from notebook_metrics import schemas
 
 
 COMMAND_EXECUTED = "https://schema.notebook.link/metrics/command-executed/v1"

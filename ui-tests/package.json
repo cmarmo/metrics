@@ -1,7 +1,7 @@
 {
-  "name": "@notebook-link/metrics-ui-tests",
+  "name": "notebook-metrics-ui-tests",
   "version": "1.0.0",
-  "description": "JupyterLab @notebook-link/metrics Integration Tests",
+  "description": "JupyterLab notebook-metrics integration tests",
   "private": true,
   "scripts": {
     "start": "jupyter lab --config jupyter_server_test_config.py",

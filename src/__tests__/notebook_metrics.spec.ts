@@ -9,7 +9,7 @@ import { CurrentChanged } from '../emissions/current-changed';
 import { IMetrics } from '../metrics';
 
 jest.mock('@jupyterlab/rendermime', () => ({
-  IRenderMimeRegistry: Symbol('@notebook-link/metrics:test-rendermime')
+  IRenderMimeRegistry: Symbol('notebook-metrics:test-rendermime')
 }));
 
 const { dispatcher } = jest.requireActual(
@@ -100,7 +100,7 @@ const activateDispatcher = async (
   return { api };
 };
 
-describe('@notebook-link/metrics', () => {
+describe('notebook-metrics', () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });

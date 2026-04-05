@@ -1,7 +1,7 @@
 {
   "jupyter.lab.shortcuts": [],
-  "title": "notebook.link metrics",
-  "description": "notebook.link metrics settings – ignored if page config is set to override",
+  "title": "notebook-metrics",
+  "description": "notebook-metrics settings, ignored if page config is set to override",
   "type": "object",
   "properties": {
     "disabled": {

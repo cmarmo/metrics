@@ -3,7 +3,7 @@ requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version>=0
 build-backend = "hatchling.build"
 
 [project]
-name = "notebook_link_metrics"
+name = "notebook-metrics"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.9"
@@ -44,25 +44,25 @@ source = "nodejs"
 fields = ["description", "authors", "urls", "keywords"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["notebook_link_metrics/labextension"]
+artifacts = ["notebook_metrics/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"notebook_link_metrics/labextension" = "share/jupyter/labextensions/@notebook-link/metrics"
-"install.json" = "share/jupyter/labextensions/@notebook-link/metrics/install.json"
+"notebook_metrics/labextension" = "share/jupyter/labextensions/notebook-metrics"
+"install.json" = "share/jupyter/labextensions/notebook-metrics/install.json"
 "jupyter-config/server-config" = "etc/jupyter/jupyter_server_config.d"
 
 [tool.hatch.build.hooks.version]
-path = "notebook_link_metrics/_version.py"
+path = "notebook_metrics/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "notebook_link_metrics/labextension/static/style.js",
-    "notebook_link_metrics/labextension/package.json",
+    "notebook_metrics/labextension/static/style.js",
+    "notebook_metrics/labextension/package.json",
 ]
-skip-if-exists = ["notebook_link_metrics/labextension/static/style.js"]
+skip-if-exists = ["notebook_metrics/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -72,7 +72,7 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "notebook_link_metrics/labextension"
+build_dir = "notebook_metrics/labextension"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"

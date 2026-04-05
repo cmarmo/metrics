@@ -7,9 +7,9 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-notebook_link_metrics/labextension
+notebook_metrics/labextension
 # Version file is handled by hatchling
-notebook_link_metrics/_version.py
+notebook_metrics/_version.py
 
 # Integration tests
 ui-tests/test-results/
@@ -58,6 +58,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+junit.xml
 htmlcov/
 .tox/
 .nox/
@@ -123,3 +124,6 @@ dmypy.json
 
 # Yarn cache
 .yarn/
+
+# VS Code
+.vscode

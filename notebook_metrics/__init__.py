@@ -4,8 +4,8 @@ from os import environ
 from pathlib import Path
 import warnings
 
-js_package = "@notebook-link/metrics"
-py_package = "notebook_link_metrics"
+js_package = "notebook-metrics"
+py_package = "notebook_metrics"
 schemas = [
     "command-executed",
     "current-changed",
