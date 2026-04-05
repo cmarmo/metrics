@@ -213,4 +213,36 @@ describe('notebook-metrics', () => {
 
     expect(collector.collect).toHaveBeenCalledTimes(0);
   });
+
+  it('catches collector failures and continues dispatching', async () => {
+    jest.spyOn(PageConfig, 'getOption').mockReturnValue('');
+    const warning = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
+    const collector = {
+      collect: jest
+        .fn()
+        .mockRejectedValueOnce(new Error('collector failed'))
+        .mockResolvedValueOnce(undefined)
+    };
+    const { settings } = createSettings({
+      anonymous: false,
+      disabled: false,
+      excluded: { [CommandExecuted.SCHEMA]: false },
+      sensitivity: 'high'
+    });
+    const queue = createStream<JupyterEvent.Emission>();
+    const { api } = await activateDispatcher(collector, settings, queue.stream);
+    api.register(CommandExecuted.SCHEMA);
+    queue.push(createEvent());
+    queue.push(createEvent());
+    await flush(20);
+    queue.close();
+    expect(collector.collect).toHaveBeenCalledTimes(2);
+    expect(warning).toHaveBeenCalledTimes(1);
+    expect(warning).toHaveBeenCalledWith(
+      'metrics collector failed',
+      expect.objectContaining({ message: 'collector failed' })
+    );
+  });
 });

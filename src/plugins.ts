@@ -135,7 +135,11 @@ namespace Private {
         return;
       }
       if (registrar.has(event.schema_id) && check(event, filter)) {
-        void collector.collect(event.schema_id, event as unknown as Event);
+        try {
+          await collector.collect(event.schema_id, event as unknown as Event);
+        } catch (error) {
+          console.warn('metrics collector failed', error);
+        }
       }
     }
   };
