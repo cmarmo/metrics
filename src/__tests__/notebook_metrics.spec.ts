@@ -22,7 +22,7 @@ const flush = async (count = 5) => {
   }
 };
 
-const createEvent = (): JupyterEvent.Emission =>
+const create = (): JupyterEvent.Emission =>
   ({
     level: { anonymous: false, sensitivity: 'high' },
     metrics: { command: 'metrics:test' },
@@ -31,7 +31,7 @@ const createEvent = (): JupyterEvent.Emission =>
     version: CommandExecuted.VERSION
   }) as unknown as JupyterEvent.Emission;
 
-const createSettings = (composite: Partial<IMetrics.Filter>) => {
+const reset = (composite: Partial<IMetrics.Filter>) => {
   const sender = {};
   const changed = new Signal<
     typeof sender,
@@ -44,7 +44,7 @@ const createSettings = (composite: Partial<IMetrics.Filter>) => {
   return { settings };
 };
 
-const createStream = <T>() => {
+const enqueue = <T>() => {
   const values: T[] = [];
   const resolvers: Array<(result: IteratorResult<T>) => void> = [];
   let done = false;
@@ -82,7 +82,7 @@ const createStream = <T>() => {
   };
 };
 
-const activateDispatcher = async (
+const activate = async (
   collector: IMetrics.ICollector,
   settings: ISettingRegistry.ISettings<Partial<IMetrics.Filter>>,
   stream: AsyncIterable<JupyterEvent.Emission>
@@ -173,17 +173,17 @@ describe('notebook-metrics', () => {
   it('does not dispatch excluded schemas from settings', async () => {
     jest.spyOn(PageConfig, 'getOption').mockReturnValue('');
     const collector = { collect: jest.fn().mockResolvedValue(undefined) };
-    const { settings } = createSettings({
+    const { settings } = reset({
       anonymous: false,
       disabled: false,
       excluded: { [CommandExecuted.SCHEMA]: true },
       sensitivity: 'high'
     });
-    const queue = createStream<JupyterEvent.Emission>();
-    const { api } = await activateDispatcher(collector, settings, queue.stream);
+    const queue = enqueue<JupyterEvent.Emission>();
+    const { api } = await activate(collector, settings, queue.stream);
 
     api.register(CommandExecuted.SCHEMA);
-    queue.push(createEvent());
+    queue.push(create());
     await flush(20);
     queue.close();
 
@@ -197,17 +197,17 @@ describe('notebook-metrics', () => {
         JSON.stringify({ excluded: { [CommandExecuted.SCHEMA]: true } })
       );
     const collector = { collect: jest.fn().mockResolvedValue(undefined) };
-    const { settings } = createSettings({
+    const { settings } = reset({
       anonymous: false,
       disabled: false,
       excluded: { [CommandExecuted.SCHEMA]: false },
       sensitivity: 'high'
     });
-    const queue = createStream<JupyterEvent.Emission>();
-    const { api } = await activateDispatcher(collector, settings, queue.stream);
+    const queue = enqueue<JupyterEvent.Emission>();
+    const { api } = await activate(collector, settings, queue.stream);
 
     api.register(CommandExecuted.SCHEMA);
-    queue.push(createEvent());
+    queue.push(create());
     await flush(20);
     queue.close();
 
@@ -225,17 +225,17 @@ describe('notebook-metrics', () => {
         .mockRejectedValueOnce(new Error('collector failed'))
         .mockResolvedValueOnce(undefined)
     };
-    const { settings } = createSettings({
+    const { settings } = reset({
       anonymous: false,
       disabled: false,
       excluded: { [CommandExecuted.SCHEMA]: false },
       sensitivity: 'high'
     });
-    const queue = createStream<JupyterEvent.Emission>();
-    const { api } = await activateDispatcher(collector, settings, queue.stream);
+    const queue = enqueue<JupyterEvent.Emission>();
+    const { api } = await activate(collector, settings, queue.stream);
     api.register(CommandExecuted.SCHEMA);
-    queue.push(createEvent());
-    queue.push(createEvent());
+    queue.push(create());
+    queue.push(create());
     await flush(20);
     queue.close();
     expect(collector.collect).toHaveBeenCalledTimes(2);
