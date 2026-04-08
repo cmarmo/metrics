@@ -102,7 +102,8 @@ python -m pip uninstall notebook-metrics
 
 ### Development install
 
-Note: You will need NodeJS to build the extension package.
+Note: You will need Node.js 24.x to build the extension package and run the
+frontend tooling.
 
 This repo uses `jlpm`, JupyterLab's pinned Yarn wrapper.
 
