@@ -15,7 +15,7 @@ The Jupyter server extension, `notebook_metrics` registers event schemas for fou
 
 1. `CommandExecuted` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time the command registry executes a command
 2. `CurrentChanged` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a non-`null` new value is emitted by the application shell's `currentChanged` signal
-3. `JupyterError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a MIME bundle that contains a `application/vnd.jupyter.error` value is rendered
+3. `JupyterError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time notebook cell execution fails with a Jupyter error
 4. `RuntimeError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time an `error` or `unhandledpromiserejection` listener on the application `window` is invoked
 
 ### JupyterLab/JupyterLite dispatcher extension

@@ -1,6 +1,5 @@
 import type { JupyterFrontEndPlugin } from '@jupyterlab/application';
 import { PageConfig } from '@jupyterlab/coreutils';
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import type { Event as JupyterEvent } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { PromiseDelegate } from '@lumino/coreutils';
@@ -10,12 +9,8 @@ import { IMetrics } from '.';
 export const broadcasts: JupyterFrontEndPlugin<void> = {
   id: 'notebook-metrics:broadcasts',
   description: 'An extension that broadcasts default metrics',
-  requires: [IMetrics.IDispatcher, IRenderMimeRegistry],
-  activate: (
-    { commands, shell },
-    { register }: IMetrics.IDispatcher,
-    rendermimes: IRenderMimeRegistry
-  ) => {
+  requires: [IMetrics.IDispatcher],
+  activate: ({ commands, shell }, { register }: IMetrics.IDispatcher) => {
     register(IMetrics.Event.CommandExecuted.SCHEMA, emitter =>
       IMetrics.Event.CommandExecuted.broadcast(emitter, commands)
     );
@@ -23,7 +18,7 @@ export const broadcasts: JupyterFrontEndPlugin<void> = {
       IMetrics.Event.CurrentChanged.broadcast(emitter, shell)
     );
     register(IMetrics.Event.JupyterError.SCHEMA, emitter =>
-      IMetrics.Event.JupyterError.broadcast(emitter, rendermimes)
+      IMetrics.Event.JupyterError.broadcast(emitter)
     );
     register(IMetrics.Event.RuntimeError.SCHEMA, emitter =>
       IMetrics.Event.RuntimeError.broadcast(emitter)

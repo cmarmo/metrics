@@ -6,15 +6,43 @@ import { Signal } from '@lumino/signaling';
 import { Widget } from '@lumino/widgets';
 import { CommandExecuted } from '../emissions/command-executed';
 import { CurrentChanged } from '../emissions/current-changed';
+import { JupyterError } from '../emissions/jupyter-error';
 import { IMetrics } from '../metrics';
 
-jest.mock('@jupyterlab/rendermime', () => ({
-  IRenderMimeRegistry: Symbol('notebook-metrics:test-rendermime')
-}));
+jest.mock('@jupyterlab/notebook', () => {
+  const { Signal } = jest.requireActual(
+    '@lumino/signaling'
+  ) as typeof import('@lumino/signaling');
+  return {
+    NotebookActions: {
+      executed: new Signal({})
+    }
+  };
+});
 
 const { dispatcher } = jest.requireActual(
   '../plugins'
 ) as typeof import('../plugins');
+
+const { NotebookActions } = jest.requireMock('@jupyterlab/notebook') as {
+  NotebookActions: {
+    executed: Signal<
+      unknown,
+      {
+        notebook: unknown;
+        cell: unknown;
+        success: boolean;
+        error?: {
+          errorName: string;
+          errorValue: string;
+          traceback: string[];
+        } | null;
+      }
+    >;
+  };
+};
+
+const executed = NotebookActions.executed;
 
 const flush = async (count = 5) => {
   for (let index = 0; index < count; index++) {
@@ -136,6 +164,64 @@ describe('notebook-metrics', () => {
 
     registration.dispose();
     await commands.execute('metrics:test');
+
+    expect(emitted).toHaveLength(1);
+  });
+
+  it('broadcasts notebook execution failures as jupyter errors', () => {
+    const emitted: JupyterEvent.Request[] = [];
+    const traceback = [
+      'Traceback (most recent call last):',
+      "NameError: name 'foo' is not defined"
+    ];
+
+    const registration = JupyterError.broadcast({
+      emit: async event => void emitted.push(event)
+    });
+
+    executed.emit({
+      notebook: {},
+      cell: {},
+      success: true,
+      error: null
+    });
+    executed.emit({
+      notebook: {},
+      cell: {},
+      success: false,
+      error: {
+        errorName: 'NameError',
+        errorValue: "name 'foo' is not defined",
+        traceback
+      }
+    });
+
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0]).toMatchObject({
+      data: {
+        level: { anonymous: false, sensitivity: 'high' },
+        metrics: {
+          output_type: 'error',
+          ename: 'NameError',
+          evalue: "name 'foo' is not defined",
+          traceback
+        }
+      },
+      schema_id: JupyterError.SCHEMA,
+      version: JupyterError.VERSION
+    });
+
+    registration.dispose();
+    executed.emit({
+      notebook: {},
+      cell: {},
+      success: false,
+      error: {
+        errorName: 'NameError',
+        errorValue: 'second failure',
+        traceback: ['Traceback']
+      }
+    });
 
     expect(emitted).toHaveLength(1);
   });

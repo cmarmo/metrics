@@ -9,6 +9,7 @@ test.use({ autoGoto: false });
 
 const COMMAND_EXECUTED =
   'https://schema.notebook.link/metrics/command-executed/v1';
+const JUPYTER_ERROR = 'https://schema.notebook.link/metrics/jupyter-error/v1';
 const RUNTIME_ERROR = 'https://schema.notebook.link/metrics/runtime-error/v1';
 
 const clearEvents = async (request: APIRequestContext) => {
@@ -21,7 +22,14 @@ const readEvents = async (request: APIRequestContext) => {
   expect(response.ok()).toBeTruthy();
   return (await response.json()) as {
     events: Array<{
-      data: { metrics?: { command?: string; description?: string } };
+      data: {
+        metrics?: {
+          command?: string;
+          description?: string;
+          ename?: string;
+          evalue?: string;
+        };
+      };
       schema_id: string;
     }>;
   };
@@ -57,6 +65,35 @@ test('should collect command executed metrics on the backend', async ({
       return match?.data.metrics?.command ?? null;
     })
     .toBe(command);
+});
+
+test('should collect notebook execution errors on the backend', async ({
+  page,
+  request
+}) => {
+  const ename = 'ValueError';
+  const evalue = 'metrics ui test notebook error';
+
+  await page.goto();
+  await page.notebook.createNew();
+  await page.notebook.setCell(0, 'code', `raise ValueError('${evalue}')`);
+  await clearEvents(request);
+  await page.notebook.runCell(0, true);
+
+  await expect
+    .poll(async () => {
+      const { events } = await readEvents(request);
+      const match = events.find(
+        event =>
+          event.schema_id === JUPYTER_ERROR &&
+          event.data.metrics?.ename === ename &&
+          event.data.metrics?.evalue === evalue
+      );
+      return match
+        ? `${match.data.metrics?.ename}:${match.data.metrics?.evalue}`
+        : null;
+    })
+    .toBe(`${ename}:${evalue}`);
 });
 
 test('should collect runtime error metrics on the backend', async ({

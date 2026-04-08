@@ -55,8 +55,7 @@ The package emits four schema'd events.
 2. `https://schema.notebook.link/metrics/current-changed/v1`
    Fired when the shell emits a non-null `currentChanged` value.
 3. `https://schema.notebook.link/metrics/jupyter-error/v1`
-   Fired when a rendered MIME bundle contains a
-   `application/vnd.jupyter.error` payload.
+   Fired when notebook cell execution fails with a Jupyter error.
 4. `https://schema.notebook.link/metrics/runtime-error/v1`
    Fired for window-level `error` and `unhandledpromiserejection` events.
 

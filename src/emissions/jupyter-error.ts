@@ -1,6 +1,15 @@
-import { IRenderMime, IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import { NotebookActions } from '@jupyterlab/notebook';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { IMetrics } from '..';
+
+type ExecutionResult = {
+  success: boolean;
+  error?: {
+    errorName: string;
+    errorValue: string;
+    traceback: string[];
+  } | null;
+};
 
 /**
  * The Jupyter error metrics type.
@@ -41,57 +50,33 @@ export namespace JupyterError {
    */
   export const SCHEMA = `https://schema.notebook.link/metrics/jupyter-error/v${VERSION}`;
 
-  const MIME_ERROR = 'application/vnd.jupyter.error';
-
-  const MIME_STDERR = 'application/vnd.jupyter.stderr';
-
   /**
-   * Broadcasts when a Jupyter error (`IError` from `nbformat`) is output.
+   * Broadcasts when notebook cell execution fails with a Jupyter error.
    * @param emitter - An event emitter, e.g. JupyterLab's event manager.
-   * @param rendermimes - A rendermime registry.
    * @returns a disposable that stops broadcasting when disposed.
-   *
-   * ### Notes
-   * This function adds a low rank (high priority) MIME renderer factory for
-   * stderr output to the given rendermime registry. It monkey-patches the
-   * default MIME renderers that are instantiated by the default factory for
-   * stderr output. It checks each rendered model for a bundled Jupyter error
-   * and emits a metrics event if a Jupyter error is found. When disposed,
-   * because there is no way to remove a MIME renderer factory from the
-   * rendermime registry, the behavior of the factory is to return the same
-   * renderer the default factory does and for each extant monkey-patched
-   * renderer to pass through rendering to the original renderer and emit
-   * nothing.
    */
-  export function broadcast(
-    emitter: IMetrics.Event.Emitter,
-    rendermimes: IRenderMimeRegistry
-  ): IDisposable {
-    const original = rendermimes.getFactory(MIME_STDERR)!;
-    let stopped = false;
-    rendermimes.addFactory({
-      ...original,
-      defaultRank: 10,
-      createRenderer: options => {
-        const renderer = original.createRenderer(options);
-        if (stopped) {
-          return renderer;
-        }
-        const { renderModel } = renderer;
-        (renderer as unknown as IRenderMime.IRenderer).renderModel = model => {
-          if (!stopped && model.data[MIME_ERROR]) {
-            const data: IMetrics.Event<JupyterError> = {
-              level: { anonymous: false, sensitivity: 'high' },
-              metrics: model.data[MIME_ERROR] as JupyterError,
-              timestamp: new Date().toISOString()
-            };
-            void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
-          }
-          return renderModel.call(renderer, model);
-        };
-        return renderer;
+  export function broadcast(emitter: IMetrics.Event.Emitter): IDisposable {
+    const handler = (_: unknown, { error, success }: ExecutionResult) => {
+      if (success || !error) {
+        return;
       }
+
+      const data: IMetrics.Event<JupyterError> = {
+        level: { anonymous: false, sensitivity: 'high' },
+        metrics: {
+          output_type: 'error',
+          ename: error.errorName,
+          evalue: error.errorValue,
+          traceback: error.traceback
+        },
+        timestamp: new Date().toISOString()
+      };
+      void emitter.emit({ data, schema_id: SCHEMA, version: VERSION });
+    };
+
+    NotebookActions.executed.connect(handler);
+    return new DisposableDelegate(() => {
+      NotebookActions.executed.disconnect(handler);
     });
-    return new DisposableDelegate(() => void (stopped = true));
   }
 }

@@ -1,8 +1,8 @@
 $id: https://schema.notebook.link/metrics/jupyter-error/v1
 version: "1"
-title: Jupyter error output metrics emission
+title: Jupyter notebook execution error metrics emission
 description: |
-  a Jupyter error output event metrics emission
+  a notebook cell execution error metrics emission
 type: object
 properties:
   level:
