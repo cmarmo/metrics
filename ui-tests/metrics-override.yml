@@ -1,0 +1,8 @@
+anonymous: false
+disabled: false
+excluded:
+  'https://schema.notebook.link/metrics/command-executed/v1': false
+  'https://schema.notebook.link/metrics/current-changed/v1': false
+  'https://schema.notebook.link/metrics/jupyter-error/v1': false
+  'https://schema.notebook.link/metrics/runtime-error/v1': false
+sensitivity: high

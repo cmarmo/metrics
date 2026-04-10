@@ -1,6 +1,6 @@
-import { Event as JupyterEvent } from '@jupyterlab/services';
+import type { Event as JupyterEvent } from '@jupyterlab/services';
 import { Token } from '@lumino/coreutils';
-import { IDisposable } from '@lumino/disposable';
+import type { IDisposable } from '@lumino/disposable';
 import { CommandExecuted as CE_IMPORT } from './emissions/command-executed';
 import { CurrentChanged as CC_IMPORT } from './emissions/current-changed';
 import { JupyterError as JP_IMPORT } from './emissions/jupyter-error';
@@ -13,12 +13,12 @@ export namespace IMetrics {
   /**
    * ID of the collector plugin.
    */
-  export const COLLECTOR = '@notebook-link/metrics:collector';
+  export const COLLECTOR = 'notebook-metrics:collector';
 
   /**
    * ID of the dispatcher plugin.
    */
-  export const DISPATCHER = '@notebook-link/metrics:dispatcher';
+  export const DISPATCHER = 'notebook-metrics:dispatcher';
 
   /**
    * Token for requiring/providing a collector plugin.

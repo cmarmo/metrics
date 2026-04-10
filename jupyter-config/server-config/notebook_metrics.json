@@ -1,7 +1,7 @@
 {
   "ServerApp": {
     "jpserver_extensions": {
-      "notebook_link_metrics": true
+      "notebook_metrics": true
     }
   }
 }

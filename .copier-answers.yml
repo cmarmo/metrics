@@ -6,9 +6,9 @@ author_name: Afshin T. Darian
 has_binder: false
 has_settings: true
 kind: server
-labextension_name: '@notebook-link/metrics'
+labextension_name: notebook-metrics
 project_short_description: A JupyterLab/JupyterLite extension for Jupyter UI metrics.
-python_name: notebook_link_metrics
+python_name: notebook_metrics
 repository: https://github.com/notebook-link/metrics
 test: true
 

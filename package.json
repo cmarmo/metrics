@@ -1,6 +1,6 @@
 {
-    "name": "@notebook-link/metrics",
-    "version": "0.1.0",
+    "name": "notebook-metrics",
+    "version": "1.0.0-alpha.1",
     "description": "A JupyterLab/JupyterLite extension for Jupyter UI metrics.",
     "keywords": [
         "jupyter",
@@ -11,7 +11,7 @@
     "bugs": {
         "url": "https://github.com/notebook-link/metrics/issues"
     },
-    "license": "UNLICENSED",
+    "license": "BSD-3-Clause",
     "author": {
         "name": "Afshin T. Darian",
         "email": "git@darian.link"
@@ -29,6 +29,9 @@
         "type": "git",
         "url": "https://github.com/notebook-link/metrics.git"
     },
+    "engines": {
+        "node": ">=24"
+    },
     "scripts": {
         "build": "jlpm build:lib && jlpm build:labextension:dev",
         "build:prod": "jlpm clean && jlpm build:lib:prod && jlpm build:labextension",
@@ -39,7 +42,7 @@
         "clean": "jlpm clean:lib",
         "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
         "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-        "clean:labextension": "rimraf notebook_link_metrics/labextension notebook_link_metrics/_version.py",
+        "clean:labextension": "rimraf notebook_metrics/labextension notebook_metrics/_version.py",
         "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
         "eslint": "jlpm eslint:check --fix",
         "eslint:check": "eslint . --cache --ext .ts,.tsx",
@@ -57,18 +60,19 @@
         "watch:labextension": "jupyter labextension watch ."
     },
     "dependencies": {
-        "@jupyterlab/application": "^4.0.0",
-        "@jupyterlab/coreutils": "^6.3.6",
-        "@jupyterlab/rendermime": "^4.3.6",
-        "@jupyterlab/settingregistry": "^4.3.6",
-        "@lumino/commands": "^2.3.1",
-        "@lumino/coreutils": "^2.2.0",
-        "@lumino/disposable": "^2.1.3",
-        "@lumino/widgets": "^2.6.0"
+        "@jupyterlab/application": "^4.5.6",
+        "@jupyterlab/coreutils": "^6.5.6",
+        "@jupyterlab/notebook": "^4.5.6",
+        "@jupyterlab/services": "^7.5.6",
+        "@jupyterlab/settingregistry": "^4.5.6",
+        "@lumino/commands": "^2.3.3",
+        "@lumino/coreutils": "^2.2.2",
+        "@lumino/disposable": "^2.1.5",
+        "@lumino/widgets": "^2.7.5"
     },
     "devDependencies": {
-        "@jupyterlab/builder": "^4.0.0",
-        "@jupyterlab/testutils": "^4.0.0",
+        "@jupyterlab/builder": "^4.5.6",
+        "@jupyterlab/testutils": "^4.5.6",
         "@types/jest": "^29.2.0",
         "@types/json-schema": "^7.0.11",
         "@types/react": "^18.0.26",
@@ -103,7 +107,7 @@
     },
     "jupyterlab": {
         "extension": true,
-        "outputDir": "notebook_link_metrics/labextension",
+        "outputDir": "notebook_metrics/labextension",
         "schemaDir": "schema"
     },
     "eslintIgnore": [

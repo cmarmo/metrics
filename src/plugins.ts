@@ -1,21 +1,16 @@
-import { JupyterFrontEndPlugin } from '@jupyterlab/application';
+import type { JupyterFrontEndPlugin } from '@jupyterlab/application';
 import { PageConfig } from '@jupyterlab/coreutils';
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
-import { Event as JupyterEvent } from '@jupyterlab/services';
+import type { Event as JupyterEvent } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { IMetrics } from '.';
 
 export const broadcasts: JupyterFrontEndPlugin<void> = {
-  id: '@notebook-link/metrics:broadcasts',
+  id: 'notebook-metrics:broadcasts',
   description: 'An extension that broadcasts default metrics',
-  requires: [IMetrics.IDispatcher, IRenderMimeRegistry],
-  activate: (
-    { commands, shell },
-    { register }: IMetrics.IDispatcher,
-    rendermimes: IRenderMimeRegistry
-  ) => {
+  requires: [IMetrics.IDispatcher],
+  activate: ({ commands, shell }, { register }: IMetrics.IDispatcher) => {
     register(IMetrics.Event.CommandExecuted.SCHEMA, emitter =>
       IMetrics.Event.CommandExecuted.broadcast(emitter, commands)
     );
@@ -23,7 +18,7 @@ export const broadcasts: JupyterFrontEndPlugin<void> = {
       IMetrics.Event.CurrentChanged.broadcast(emitter, shell)
     );
     register(IMetrics.Event.JupyterError.SCHEMA, emitter =>
-      IMetrics.Event.JupyterError.broadcast(emitter, rendermimes)
+      IMetrics.Event.JupyterError.broadcast(emitter)
     );
     register(IMetrics.Event.RuntimeError.SCHEMA, emitter =>
       IMetrics.Event.RuntimeError.broadcast(emitter)
@@ -98,15 +93,20 @@ namespace Private {
 
   const initialize = (filter: Filter, settings: Settings): IDisposable => {
     let defaults: Override;
+    const excluded = { ...filter.excluded };
     try {
-      defaults = JSON.parse(PageConfig.getOption('notebook_link_metrics'));
+      defaults = JSON.parse(PageConfig.getOption('notebook_metrics'));
     } catch (_) {
       defaults = {};
     }
     const update = (filter: Filter, settings: Settings, override: Override) => {
+      const configured = (settings.composite.excluded ??
+        {}) as IMetrics.Filter['excluded'];
+      const overridden = override.excluded ?? {};
       const { anonymous, disabled, sensitivity } = settings.composite;
       filter.anonymous = override.anonymous ?? anonymous!;
       filter.disabled = override.disabled ?? disabled!;
+      filter.excluded = { ...excluded, ...configured, ...overridden };
       filter.sensitivity = override.sensitivity ?? sensitivity!;
     };
     const handler = (settings: Settings) => update(filter, settings, defaults);
@@ -130,7 +130,11 @@ namespace Private {
         return;
       }
       if (registrar.has(event.schema_id) && check(event, filter)) {
-        void collector.collect(event.schema_id, event as unknown as Event);
+        try {
+          await collector.collect(event.schema_id, event as unknown as Event);
+        } catch (error) {
+          console.warn('metrics collector failed', error);
+        }
       }
     }
   };

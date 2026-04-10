@@ -1,6 +1,9 @@
-# `@notebook-link/metrics`
+# `notebook-metrics`
 
 A JupyterLab/JupyterLite extension for Jupyter UI metrics.
+
+If you are integrating the package for the first time, start with the
+[onboarding guide](./ONBOARDING.md).
 
 ## Usage
 
@@ -8,11 +11,11 @@ This package contains four Jupyter extensions.
 
 ### Jupyter server extension
 
-The Jupyter server extension, `notebook_link_metrics` registers event schemas for four types of metrics events:
+The Jupyter server extension, `notebook_metrics` registers event schemas for four types of metrics events:
 
 1. `CommandExecuted` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time the command registry executes a command
 2. `CurrentChanged` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a non-`null` new value is emitted by the application shell's `currentChanged` signal
-3. `JupyterError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time a MIME bundle that contains a `application/vnd.jupyter.error` value is rendered
+3. `JupyterError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time notebook cell execution fails with a Jupyter error
 4. `RuntimeError` events (`anonymous`: `false`, `sensitivity`: `"high"`), which are emitted every time an `error` or `unhandledpromiserejection` listener on the application `window` is invoked
 
 ### JupyterLab/JupyterLite dispatcher extension
@@ -21,7 +24,7 @@ The front-end dispatcher extension listens for registered events and dispatches 
 
 ### JupyterLab/JupyterLite collector extension
 
-The collector extension is the client that receives metrics emissions. The default implementation is a no-op and in production, the extension `@notebook-link/metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the dispatcher extension to use. The `interface` for a collector is minimal:
+The collector extension is the client that receives metrics emissions. The default implementation is a no-op and in production, the extension `notebook-metrics:collector` needs to be disabled and replaced with a custom extension that `provides` an `IMetrics.ICollector` for the dispatcher extension to use. The `interface` for a collector is minimal:
 
 ```ts
 interface ICollector {
@@ -57,7 +60,7 @@ emissions: the JupyterLab user settings system or using the JupyterLab
 There are several ways to populate `PageConfig`, (which is an object literal
 loaded in the HTML page that hosts JupyterLab). As a convenience for JupyterLab
 deployment, this package supports setting a path to a YAML file as an
-environment variable, `NOTEBOOK_LINK_METRICS_OVERRIDE`.
+environment variable, `NOTEBOOK_METRICS_OVERRIDE`.
 
 The contents of an override file are the same keys that exist in the user
 settings (`dispatcher.json`) and **if set, they always take precedence over user
@@ -78,14 +81,13 @@ sensitivity: high
 
 ## Requirements
 
-- JupyterLab >= 4.0.0
+- Python >= 3.9
+- JupyterLab >= 4.0.0,<5
 
 ## Install
 
-This extension is currently unpublished. To install the extension, execute:
-
 ```bash
-pip install git+https://github.com/notebook-link/metrics.git
+python -m pip install notebook-metrics
 ```
 
 ## Uninstall
@@ -93,24 +95,23 @@ pip install git+https://github.com/notebook-link/metrics.git
 To remove the extension, execute:
 
 ```bash
-pip uninstall notebook_link_metrics
+python -m pip uninstall notebook-metrics
 ```
 
 ## Contributing
 
 ### Development install
 
-Note: You will need NodeJS to build the extension package.
+Note: You will need Node.js 24.x to build the extension package and run the
+frontend tooling.
 
-The `jlpm` command is JupyterLab's pinned version of
-[yarn](https://yarnpkg.com/) that is installed with JupyterLab. You may use
-`yarn` or `npm` in lieu of `jlpm` below.
+This repo uses `jlpm`, JupyterLab's pinned Yarn wrapper.
 
 ```bash
 # Clone the repo to your local environment
-# Change directory to the notebook_link_metrics directory
+# Change directory to the metrics directory
 # Install package in development mode
-pip install -e "."
+python -m pip install -e ".[test]"
 # Link your development version of the extension with JupyterLab
 jupyter labextension develop . --overwrite
 # Rebuild extension Typescript source after making changes
@@ -137,14 +138,23 @@ jupyter lab build --minimize=False
 ### Development uninstall
 
 ```bash
-pip uninstall notebook_link_metrics
+python -m pip uninstall notebook-metrics
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
 command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `@notebook-link/metrics` within that folder.
+folder is located. Then you can remove the symlink named `notebook-metrics` within that folder.
 
 ### Testing the extension
+
+#### Python tests
+
+Install the editable package with test extras, then run:
+
+```sh
+python -m pip install -e ".[test]"
+pytest -vv -r ap --cov notebook_metrics
+```
 
 #### Frontend tests
 
@@ -153,7 +163,7 @@ This extension is using [Jest](https://jestjs.io/) for JavaScript code testing.
 To execute them, execute:
 
 ```sh
-jlpm
+jlpm install
 jlpm test
 ```
 
@@ -163,6 +173,17 @@ This extension uses [Playwright](https://playwright.dev/docs/intro) for the inte
 More precisely, the JupyterLab helper [Galata](https://github.com/jupyterlab/jupyterlab/tree/master/galata) is used to handle testing the extension in JupyterLab.
 
 More information are provided within the [ui-tests](./ui-tests/README.md) README.
+
+The local flow that is currently validated in this repo is:
+
+```sh
+jlpm build:prod
+cd ui-tests
+jlpm install
+jlpm playwright install
+PLAYWRIGHT_HTML_OPEN=never jlpm playwright test
+cd ..
+```
 
 ### Packaging the extension
 

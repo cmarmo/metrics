@@ -1,9 +1,11 @@
 const jestJupyterLab = require('@jupyterlab/testutils/lib/jest-config');
 
 const esModules = [
+  '@jupyter/',
   '@codemirror',
   '@jupyter/ydoc',
   '@jupyterlab/',
+  '@microsoft/',
   'lib0',
   'nanoid',
   'vscode-ws-jsonrpc',
@@ -23,6 +25,7 @@ module.exports = {
     '!src/**/.ipynb_checkpoints/*'
   ],
   coverageReporters: ['lcov', 'text'],
+  modulePathIgnorePatterns: ['<rootDir>/notebook_metrics/labextension/'],
   testRegex: 'src/.*/.*.spec.ts[x]?$',
   transformIgnorePatterns: [`/node_modules/(?!${esModules}).+`]
 };
