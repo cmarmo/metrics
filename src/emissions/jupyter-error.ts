@@ -1,5 +1,7 @@
 import { NotebookActions } from '@jupyterlab/notebook';
+import { Cell, ICellModel } from '@jupyterlab/cells'
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
+import { JSONObject, JSONValue } from '@lumino/coreutils';
 import { IMetrics } from '..';
 
 type ExecutionResult = {
@@ -9,6 +11,7 @@ type ExecutionResult = {
     errorValue: string;
     traceback: string[];
   } | null;
+  cell: Cell<ICellModel>;
 };
 
 /**
@@ -34,6 +37,12 @@ export type JupyterError = {
    * The error's traceback.
    */
   traceback: string[];
+
+  /**
+   * The executed cell.
+   */
+  cell: JSONObject;
+
 };
 
 /**
@@ -56,7 +65,7 @@ export namespace JupyterError {
    * @returns a disposable that stops broadcasting when disposed.
    */
   export function broadcast(emitter: IMetrics.Event.Emitter): IDisposable {
-    const handler = (_: unknown, { error, success }: ExecutionResult) => {
+    const handler = (_: unknown, { error, success, cell }: ExecutionResult) => {
       if (success || !error) {
         return;
       }
@@ -67,7 +76,11 @@ export namespace JupyterError {
           output_type: 'error',
           ename: error.errorName,
           evalue: error.errorValue,
-          traceback: error.traceback
+          traceback: error.traceback,
+          cell: {
+            id: cell.model.toJSON().id as JSONValue,
+            metadata: cell.model.toJSON().metadata as JSONValue
+          }
         },
         timestamp: new Date().toISOString()
       };
