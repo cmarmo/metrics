@@ -39,6 +39,8 @@ properties:
             type: string
           metadata:
             type: object
+      notebook:
+        type: string
     required:
       - ename
       - evalue
