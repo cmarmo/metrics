@@ -1,8 +1,4 @@
-import {
-  Notebook,
-  NotebookActions,
-  INotebookTracker
-} from '@jupyterlab/notebook';
+import { Notebook, NotebookActions } from '@jupyterlab/notebook';
 import { Cell, ICellModel } from '@jupyterlab/cells';
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { JSONObject } from '@lumino/coreutils';
