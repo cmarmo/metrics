@@ -17,7 +17,7 @@ type ExecutionResult = {
 
 type NotebookInfo = {
   [key: string]: string;
-}
+};
 
 /**
  * The Jupyter error metrics type.
@@ -58,8 +58,7 @@ export type JupyterError = {
     id: string;
     filename: string;
     filepath: string;
-  }
-
+  };
 };
 
 /**
@@ -82,22 +81,30 @@ export namespace JupyterError {
    * @returns a disposable that stops broadcasting when disposed.
    */
   export function broadcast(emitter: IMetrics.Event.Emitter): IDisposable {
-    const handler = (_: unknown, { notebook, cell, error, success }: ExecutionResult) => {
+    const handler = (
+      _: unknown,
+      { notebook, cell, error, success }: ExecutionResult
+    ) => {
       if (success || !error) {
         return;
       }
 
-      const notebookinfo = (notebook.parent?.title.caption as unknown as string).split("\n");
-      const notebookdict = notebookinfo.reduce((acckey: NotebookInfo, currvalue: string) => {
-        const [key, value] = currvalue.split(':', 2);
-  
-        if (key) {
-          // .trim() removes the leading space after the colon and trailing spaces
-          acckey[key.trim()] = value.trim();
-        }
-  
-        return acckey;
-      }, {});
+      const notebookinfo = (
+        notebook.parent?.title.caption as unknown as string
+      ).split('\n');
+      const notebookdict = notebookinfo.reduce(
+        (acckey: NotebookInfo, currvalue: string) => {
+          const [key, value] = currvalue.split(':', 2);
+
+          if (key) {
+            // .trim() removes the leading space after the colon and trailing spaces
+            acckey[key.trim()] = value.trim();
+          }
+
+          return acckey;
+        },
+        {}
+      );
 
       const data: IMetrics.Event<JupyterError> = {
         level: { anonymous: false, sensitivity: 'high' },
@@ -114,7 +121,7 @@ export namespace JupyterError {
             id: notebook.id,
             filename: notebookdict['Name'],
             filepath: notebookdict['Path']
-          },
+          }
         },
         timestamp: new Date().toISOString()
       };
