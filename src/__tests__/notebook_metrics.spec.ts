@@ -190,9 +190,9 @@ describe('notebook-metrics', () => {
         id: 'id345',
         parent: {
           title: {
-            caption : "Name: 'Untitled.ipynb'\nPath: 'home/Untitled.ipynb'"
+            caption: "Name: 'Untitled.ipynb'\nPath: 'home/Untitled.ipynb'"
           }
-        },
+        }
       },
       cell: {
         model: {
